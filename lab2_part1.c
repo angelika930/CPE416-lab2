@@ -17,10 +17,18 @@ Write a program that:
 #include <stdio.h>
 
 
-void stop_motors()
+void motor(uint8_t num, int8_t speed)
 {
-        set_servo(0, 127);
-        set_servo(1, 127);
+        if (speed == 30) {
+                set_servo(num, 255);
+        }
+        else if (speed == -30) {
+                set_servo(num, 97);    
+        }
+        else if (speed == 0) {
+                set_servo(num, 127);
+        }
+        
 
 }
 
@@ -31,8 +39,8 @@ int main(void) {
 
 while(1) 
 {
-        motor( 0, 20);
-        motor(1, 20);
+        motor( 0, 0);
+        motor(1, 0);
 }
 
    return 0;
