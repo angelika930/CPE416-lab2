@@ -16,8 +16,7 @@ Write a program that:
 #include <avr/interrupt.h>
 #include <stdio.h>
 
-
-void motor(uint8_t num, int8_t speed)
+/**void motor(uint8_t num, int8_t speed)
 {
         if (speed == 30) {
                 set_servo(num, 255);
@@ -28,9 +27,33 @@ void motor(uint8_t num, int8_t speed)
         else if (speed == 0) {
                 set_servo(num, 127);
         }
-        
-
 }
+*/
+
+void motor(uint8_t num, int8_t speed)
+{       
+        int16_t adjusted_speed;
+
+
+        if (num) //wheel 1
+        {
+                adjusted_speed = (speed*3)/10 + 127;
+                lcd_cursor(0,1);
+                print_string("1: ");
+                print_num(adjusted_speed);
+                set_servo(1, adjusted_speed); //fast
+        }
+        else    //wheel 0
+        {
+                adjusted_speed = (-speed*3)/10 + 127;
+                lcd_cursor(0, 0);
+                print_string("0: ");
+                print_num(adjusted_speed);
+                set_servo(0, adjusted_speed); //fast
+        }
+}
+
+
 
 
 int main(void) {
@@ -39,8 +62,10 @@ int main(void) {
 
 while(1) 
 {
-        motor( 0, 0);
-        motor(1, 0);
+        motor(1, 100);
+        motor(0, 100);
+
+
 }
 
    return 0;
