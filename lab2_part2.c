@@ -46,16 +46,28 @@ void sensor_update()
         print_string("R: ");
         print_num(right_eye);  
 }
+void fear() {
+
+	if (analog(0) >= 500) {
+		motor(1, -50);
+		_delay_ms(1000);
+	}
+	if (analog (1) >= 500) {
+		motor(0, -50);
+		_delay_ms(1000);
+	}
+
+}
 
 int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
-   sensor_init();
 
 while(1) 
 {   
         sensor_update();
+	fear();
 
         
 
