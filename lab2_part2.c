@@ -24,32 +24,43 @@ void motor(uint8_t num, int8_t speed)
         if (num == 0) //wheel 0
         {
                 adjusted_speed = (speed*3)/10 + 127;
-                lcd_cursor(0,0);
-                print_string("0: ");
-                print_num(adjusted_speed);
                 set_servo(0, adjusted_speed); //fast
         }
         else    //wheel 1
         {
                 adjusted_speed = (-speed*3)/10 + 127;
-                lcd_cursor(0, 1);
-                print_string("1: ");
-                print_num(adjusted_speed);
                 set_servo(1, adjusted_speed); //fast
         }
 }
 
 
+void sensor_update()
+{
+        uint8_t left_eye = (analog(0));
+        lcd_cursor(0, 0);
+        print_string("L: ");
+        print_num(left_eye);
+
+        uint8_t right_eye = (analog(1));
+        lcd_cursor(0, 1);
+        print_string("R: ");
+        print_num(right_eye);  
+}
+
 int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
-
+   sensor_init();
 
 while(1) 
-{
+{   
+        sensor_update();
+
+        
+
 
 }
 
-   return 0;
+return 0;
 }
