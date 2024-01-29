@@ -1,13 +1,11 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 1
+//Lab 1 part 2
 //Description: 
 
+The program that implements Braitenberg vehicles 2a and 2b. 
+Pressing the on-board button should toggle between the 2 vehicles
+The display  show whichs vehicle is running
 
-Write a program that:
-- gradually spins the motors to full speed forward
-- gradually slows the motors to a stop
-- does the same in the reverse motor direction and continuously repeats
-- while the program is running, print the motor speed on the screen
 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
 */
 
@@ -42,41 +40,6 @@ void motor(uint8_t num, int8_t speed)
 }
 
 
-
-void full_speed(uint8_t direction)
-{//gradually spins the motors to full speed forward (1)
-//or backwards (0)
-int8_t max = (direction)?(100):(-100);
-
-int8_t i = 0;
-while (i != max)
-{ 
-        motor(0, i);
-        motor(1, i);
-        _delay_ms(100);
-        if (direction)
-                i++;
-        else
-                i--;
-}
-}
-
-void gradually_stop(uint8_t direction)
-{//gradually slows the motors to a stop
-//forward (1) or backwards (0)
-int8_t i = (direction)?(100):(-100);
-while (i != 0)
-{ 
-        motor(0, i);
-        motor(1, i);
-        _delay_ms(100);
-        if (direction)
-                i--;
-        else
-                i++;
-}
-}
-
 int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
@@ -85,11 +48,7 @@ int main(void) {
 
 while(1) 
 {
-        full_speed(0);
-        gradually_stop(0);
 
-        full_speed(1);
-        gradually_stop(1);
 }
 
    return 0;
