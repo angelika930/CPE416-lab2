@@ -36,25 +36,37 @@ void motor(uint8_t num, int8_t speed)
 
 void sensor_update()
 {
-        uint8_t left_eye = (analog(0));
+        uint8_t left_eye = (analog(3));
         lcd_cursor(0, 0);
         print_string("L: ");
-        print_num(left_eye);
+        print_num((uint16_t)left_eye);
+	print_string(" ");
 
-        uint8_t right_eye = (analog(1));
+        uint16_t right_eye = (analog(4));
         lcd_cursor(0, 1);
         print_string("R: ");
         print_num(right_eye);  
+	print_string(" ");
 }
-void fear() {
-
-	if (analog(0) >= 500) {
-		motor(1, -50);
-		_delay_ms(1000);
+void fear(int state1, int state2) {
+	if (analog(3) > state1) {
+		motor(1, (state1 + state1 * .10));
+		state1 = analog(3);
+	//	_delay_ms(500);
 	}
-	if (analog (1) >= 500) {
-		motor(0, -50);
-		_delay_ms(1000);
+	else {
+		motor(1, (state1 - state1 * .10));
+		state1 = analog(3);
+	}
+	if (analog (4) > state2) {
+		motor(0, (state2 + state2*.10));
+		state2 = analog(4);
+	//	_delay_ms(500);
+	}
+	else {
+
+		motor(0, (state2 - state2*.10));
+		state2 = analog(4);
 	}
 
 }
@@ -64,10 +76,12 @@ int main(void) {
    motor(0, 0);
    motor(1, 0);
 
+int state1 = 50;
+int state2 = 50;
 while(1) 
-{   
+{  
         sensor_update();
-	fear();
+	fear(state1, state2);
 
         
 
