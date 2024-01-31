@@ -48,13 +48,7 @@ void attraction(int state1, int state2) {
 		motor(1, (state1 - (state1 * .25)));
 		motor(0, (state1 - (state1 *.70)));
 		state1 = analog(3);
-	//	_delay_ms(500);
 	}
-//	else if (analog(3) < state1) {
-//		motor(1, (state1 - (state1 * .70)));
-//		motor(0, (state1 - (state1 * .25)));
-//		state1 = analog(3);
-//	}
 	else {
 		state1 = 70;
 		motor(1, state1);
@@ -63,14 +57,30 @@ void attraction(int state1, int state2) {
 		motor(0, (state2 - (state2 *.25)));
 		motor(1, (state2 - (state2 *.70)));
 		state2 = analog(4);
-	//	_delay_ms(500);
 	}
-//	else if (analog(4) <= state2) {
+	else {
+		state2 = 70;
+		motor(0, state2);
+	}
 
-//		motor(0, (state2 - (state2*.70)));
-//		motor(1, (state2 - (state2*.25)));
-//		state2 = analog(4);
-//	}
+}
+
+
+void shy(int state1, int state2) {
+	if (analog(3) > state1) {
+		motor(1, (state1 - (state1 * .70)));
+		motor(0, (state1 - (state1 *.25)));
+		state1 = analog(3);
+	}
+	else {
+		state1 = 70;
+		motor(1, state1);
+	}
+	if (analog(4) > state2) {
+		motor(0, (state2 - (state2 *.70)));
+		motor(1, (state2 - (state2 *.25)));
+		state2 = analog(4);
+	}
 	else {
 		state2 = 70;
 		motor(0, state2);
@@ -100,22 +110,22 @@ int main(void) {
    motor(0, 0);
    motor(1, 0);
 
-int fstate1 = 50;
-int fstate2 = 50;
+int a_state1 = 70;
+int a_state2 = 70;
 
-int astate1 = 50;
-int astate2 = 50;
+int s_state1 = 70;
+int s_state2 = 70;
 
 bool flag = false;
 
 while(1) 
 {  
-	/*
+	
 	while (flag == false) {
-		_delay_ms(300);
+		_delay_ms(200);
 		clear_screen();
-		print_string("Fear");
-		fear(fstate1, fstate2);
+		print_string("Attraction");
+		attraction(a_state1, a_state2);
 
 		if (button_delay_check(1) == 1) {
 			flag = true;
@@ -123,22 +133,16 @@ while(1)
 		}
 	}
 	while (flag) {
-		_delay_ms(300);
+		_delay_ms(200);
 		clear_screen();
-		print_string("Aggression");
-		aggression(astate1, astate2);
+		print_string("Shy");
+		shy(s_state1, s_state2);
 
 		if (button_delay_check(1) == 1) {
 			flag = false;
 			break;
 		}
 	}
-
-//	motor(0,0);
-//	motor(1,0);
-
-        */
-	attraction(astate1, astate2);
 
 
 }
