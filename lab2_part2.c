@@ -92,22 +92,21 @@ void fear(int state1, int state2) {
 
 void aggression(int state1, int state2) {
 	if (analog(3) > state1) {
-		motor(1, (state1 + (state1 * .50)));
+		motor(1, (state1 + (state1 * .70)));
 		state1 = analog(3);
 	//	_delay_ms(500);
 	}
 	else {
-		motor(1, (state1 - (state1 * .50)));
+		motor(1, (state1 - (state1 * .70)));
 		state1 = analog(3);
 	}
 	if (analog (4) > state2) {
-		motor(0, (state2 + (state2*.50)));
+		motor(0, (state2 + (state2*.70)));
 		state2 = analog(4);
 	//	_delay_ms(500);
 	}
 	else {
-
-		motor(0, (state2 - (state2*.50)));
+		motor(0, state2 - (state2*.50));
 		state2 = analog(4);
 	}
 
@@ -119,11 +118,11 @@ int main(void) {
    motor(0, 0);
    motor(1, 0);
 
-int fstate1 = 50;
-int fstate2 = 50;
+int fstate1 = 70;
+int fstate2 = 70;
 
-int astate1 = 50;
-int astate2 = 50;
+int astate1 = 70;
+int astate2 = 70;
 
 bool flag = false;
 

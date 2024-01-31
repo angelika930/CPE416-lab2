@@ -122,7 +122,7 @@ while(1)
 {  
 	
 	while (flag == false) {
-		_delay_ms(200);
+		_delay_ms(300);
 		clear_screen();
 		print_string("Attraction");
 		attraction(a_state1, a_state2);
@@ -133,7 +133,7 @@ while(1)
 		}
 	}
 	while (flag) {
-		_delay_ms(200);
+		_delay_ms(300);
 		clear_screen();
 		print_string("Shy");
 		shy(s_state1, s_state2);
