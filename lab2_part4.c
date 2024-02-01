@@ -31,45 +31,52 @@ void motor(uint8_t num, int8_t speed)
         if (num == 0) //wheel 0
         {
                 adjusted_speed = (speed*3)/10 + 127;
-                set_servo(LEFT_MOTOR, adjusted_speed); //fast
+                set_servo(RIGHT_MOTOR, adjusted_speed); //fast
         }
         else    //wheel 1
         {
                 adjusted_speed = (-speed*3)/10 + 127;
-                set_servo(RIGHT_MOTOR, adjusted_speed); //fast
+                set_servo(LEFT_MOTOR, adjusted_speed); //fast
         }
 }
 
-
-void sensor_update()
-{
-        uint8_t left_eye = (analog(LEFT_EYE));
-        lcd_cursor(0, 0);
-        print_string("L: ");
-        print_num(left_eye);
-		print_string(" ");
-
-        uint16_t right_eye = (analog(RIGHT_EYE));
-        lcd_cursor(0, 1);
-        print_string("R: ");
-        print_num(right_eye);  
-		print_string(" ");
-}
-
-#define BLACK_ANALOG 100
-#define WHITE_ANALOG 150
+#define UPPER_BOUND 100
+#define LOWER_BOUND 50
 #define K_P 10
 #define K_D 10
+#define DEFAULT_SPEED 10
+#define NUM_OF_SAMPLES 10
+
+//array handling
+int * add_to_array(int analog_samples[NUM_OF_SAMPLES], int added_num)
+{//add added_num to the front of the array, remove the oldest num
+
+int i = 0;
+for (i = 0; i < NUM_OF_SAMPLES; i++)
+{
+        analog_samples[i] = analog_samples[i-1];
+}
+analog_samples[0] = added_num;
+
+return analog_samples;
+}
+
 
 void line_tracking()
 {	
+        /*
+        int analog_samples[NUM_OF_SAMPLES] = 0;
+
 	uint8_t prev_left = 0;
 	uint8_t prev_right = 0;
-	uint8_t curr_left = 0;
-	uint8_t curr_right = 0;
+
+
 
 	uint8_t d_rate_of_change_left = 0;
 	uint8_t d_rate_of_change_right = 0;
+        */
+       	uint8_t curr_left = 0;
+	uint8_t curr_right = 0;
 
 	uint8_t error_left = 0;
 	uint8_t error_right = 0;
@@ -77,40 +84,51 @@ void line_tracking()
 	uint8_t change_in_left = 0;
 	uint8_t change_in_right = 0;
 
-
 	while(1)
 	{
-        curr_left = (analog(LEFT_EYE));
-        lcd_cursor(0, 0);
-        print_string("L: ");
-        print_num(curr_left);
-		print_string(" ");
 
-        curr_right = (analog(RIGHT_EYE));
-        lcd_cursor(0, 1);
-        print_string("R: ");
-        print_num(curr_right);  
-		print_string(" ");
+                curr_left = (analog(LEFT_EYE));
+                lcd_cursor(0, 0);
+                print_string("L: ");
+                print_num(curr_left);
+                print_string("    ");
 
-		error_left = BLACK_ANALOG - error_left; //change if depending on black/white num
-		error_right = BLACK_ANALOG - error_right;
+                curr_right = (analog(RIGHT_EYE));
+                lcd_cursor(0, 1);
+                print_string("R: ");
+                print_num(curr_right);  
 
-		d_rate_of_change_left = curr_left - prev_left;
- 		d_rate_of_change_right = curr_right - prev_right;
+		print_string("    ");
 
-		//if right eye sees error, left wheel slows down
-		//if left eye sees error, right wheel slows down
+                if (curr_left > UPPER_BOUND)
+                {
+                        error_left = UPPER_BOUND - curr_left;
+                }
+                else if (curr_left < LOWER_BOUND)
+                {
+                        error_left = LOWER_BOUND - curr_left;
+                }
 
-		change_in_left = (error_left * K_P) + (d_rate_of_change_left * K_D);
-		change_in_right = (error_right * K_P) + (d_rate_of_change_right * K_D);
+                error_left = error_left * 0.3;
+
+                motor(RIGHT_MOTOR, DEFAULT_SPEED - error_left);
+
+/////////////////////////////////////////
 
 
-		//idk...
-		motor(RIGHT_MOTOR, change_in_left);
-		motor(LEFT_MOTOR, change_in_right);
 
-		prev_left = curr_left;
-		prev_right = curr_right;
+                if (curr_right > UPPER_BOUND)
+                {
+                        error_right = UPPER_BOUND - curr_right;
+                }
+                else if (curr_right < LOWER_BOUND)
+                {
+                        error_right = LOWER_BOUND - curr_right;
+                }
+
+                error_right = error_right * 0.2;
+
+                motor(LEFT_MOTOR, DEFAULT_SPEED - error_right);
 
 	}
 
@@ -119,6 +137,37 @@ void line_tracking()
 	
 }
 
+void darkness_seeking()
+{
+        uint8_t curr_left = 0;
+	uint8_t curr_right = 0;
+
+        curr_left = (analog(LEFT_EYE));
+        lcd_cursor(0, 0);
+        print_string("L: ");
+        print_num(curr_left);
+        print_string("    ");
+
+        curr_right = (analog(RIGHT_EYE));
+        lcd_cursor(0, 1);
+        print_string("R: ");
+        print_num(curr_right);  
+
+        print_string("    ");
+
+        if (curr_right > curr_left)
+        {
+                motor(LEFT_MOTOR, 20);
+                motor(RIGHT_MOTOR, 10);
+        }
+        else
+        {
+                motor(LEFT_MOTOR, 10);
+                motor(RIGHT_MOTOR, 20);
+        }
+
+
+}
 
 
 int main(void) {
@@ -130,8 +179,9 @@ bool flag = false;
 
 while(1) 
 {  
+        
 
-	line_tracking();
+	darkness_seeking();
 }
 
 return 0;
