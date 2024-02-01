@@ -15,6 +15,7 @@ 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
 #include <avr/interrupt.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
@@ -22,6 +23,11 @@ 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
 #define LEFT_EYE 0
 #define RIGHT_EYE 1
 
+#define IS_BETWEEN(x, a, b) ((x) >= (a) && (x) <= (b))
+#define K_P 0.1
+#define K_D 0.1
+#define DEFAULT_SPEED 10
+#define NUM_OF_SAMPLES 10
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
@@ -40,53 +46,53 @@ void motor(uint8_t num, int8_t speed)
         }
 }
 
-#define UPPER_BOUND 100
-#define LOWER_BOUND 50
-#define K_P 10
-#define K_D 10
-#define DEFAULT_SPEED 10
-#define NUM_OF_SAMPLES 10
 
-//array handling
-int * add_to_array(int analog_samples[NUM_OF_SAMPLES], int added_num)
-{//add added_num to the front of the array, remove the oldest num
-
-int i = 0;
-for (i = 0; i < NUM_OF_SAMPLES; i++)
+void add_to_array(int analog_samples[], int added_num, int num_of_samples) 
 {
-        analog_samples[i] = analog_samples[i-1];
+   //shift
+    for (int i = num_of_samples - 1; i > 0; i--) {
+        analog_samples[i] = analog_samples[i - 1];
+    }
+
+    analog_samples[0] = added_num;
 }
-analog_samples[0] = added_num;
 
-return analog_samples;
+float calculate_average(int analog_samples[NUM_OF_SAMPLES]) 
+{
+    int sum = 0;
+    for (int i = 0; i < NUM_OF_SAMPLES; i++) {
+        sum += analog_samples[i];
+    }
+   return (float)sum / NUM_OF_SAMPLES;
 }
 
+void button_pause()
+{
+        if (get_btn())
+        {
+                motor(0, 0);
+                motor(1, 0);
+                clear_screen();
+                print_string("paused");
+                while(1)
+                        {
+                                
+                        }
+        }
+}
 
-void line_tracking()
-{	
-        /*
-        int analog_samples[NUM_OF_SAMPLES] = 0;
+void line_seeking()
+{
+    int curr_left = 0;
+    int curr_right = 0;
+    int prev_error = 0;
+    int analog_samples[NUM_OF_SAMPLES] = {0};
 
-	uint8_t prev_left = 0;
-	uint8_t prev_right = 0;
+        while (true) 
+        {
+                button_pause();
 
-
-
-	uint8_t d_rate_of_change_left = 0;
-	uint8_t d_rate_of_change_right = 0;
-        */
-       	uint8_t curr_left = 0;
-	uint8_t curr_right = 0;
-
-	uint8_t error_left = 0;
-	uint8_t error_right = 0;
-
-	uint8_t change_in_left = 0;
-	uint8_t change_in_right = 0;
-
-	while(1)
-	{
-
+                // print 
                 curr_left = (analog(LEFT_EYE));
                 lcd_cursor(0, 0);
                 print_string("L: ");
@@ -97,91 +103,49 @@ void line_tracking()
                 lcd_cursor(0, 1);
                 print_string("R: ");
                 print_num(curr_right);  
+                print_string("    ");
 
-		print_string("    ");
+                int error = curr_left - curr_right;
+                add_to_array(analog_samples, error, NUM_OF_SAMPLES);
+                float derivative = calculate_average(analog_samples);
 
-                if (curr_left > UPPER_BOUND)
-                {
-                        error_left = UPPER_BOUND - curr_left;
-                }
-                else if (curr_left < LOWER_BOUND)
-                {
-                        error_left = LOWER_BOUND - curr_left;
-                }
-
-                error_left = error_left * 0.3;
-
-                motor(RIGHT_MOTOR, DEFAULT_SPEED - error_left);
-
-/////////////////////////////////////////
+                int leftMotorSpeed = 15 + K_P * error + K_D * derivative;
+                int rightMotorSpeed = 15 - K_P * error - K_D * derivative;
 
 
-
-                if (curr_right > UPPER_BOUND)
-                {
-                        error_right = UPPER_BOUND - curr_right;
-                }
-                else if (curr_right < LOWER_BOUND)
-                {
-                        error_right = LOWER_BOUND - curr_right;
-                }
-
-                error_right = error_right * 0.2;
-
-                motor(LEFT_MOTOR, DEFAULT_SPEED - error_right);
-
-	}
-
-
-
-	
-}
-
-void darkness_seeking()
-{
-        uint8_t curr_left = 0;
-	uint8_t curr_right = 0;
-
-        curr_left = (analog(LEFT_EYE));
-        lcd_cursor(0, 0);
-        print_string("L: ");
-        print_num(curr_left);
-        print_string("    ");
-
-        curr_right = (analog(RIGHT_EYE));
-        lcd_cursor(0, 1);
-        print_string("R: ");
-        print_num(curr_right);  
-
-        print_string("    ");
-
-        if (curr_right > curr_left)
+ /*
+        if ((abs(error-prev_error)+50 )> derivative) //if the rate of change is way larger than previous
         {
-                motor(LEFT_MOTOR, 20);
-                motor(RIGHT_MOTOR, 10);
-        }
-        else
-        {
-                motor(LEFT_MOTOR, 10);
-                motor(RIGHT_MOTOR, 20);
-        }
+                if (leftMotorSpeed > rightMotorSpeed)
+                {
+                        leftMotorSpeed = leftMotorSpeed + abs(error - prev_error);
+                        
+                } 
+                else if (leftMotorSpeed < rightMotorSpeed)
+                {
+                        rightMotorSpeed = rightMotorSpeed + abs(error - prev_error);
+                } 
+        }*/
 
 
+        // Set motor speeds
+        motor(LEFT_MOTOR, leftMotorSpeed);
+        motor(RIGHT_MOTOR, rightMotorSpeed);
+
+        prev_error = error;
+
+    }
 }
-
 
 int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
 
-bool flag = false;
-
 while(1) 
 {  
+        line_seeking();
         
-
-	darkness_seeking();
 }
 
 return 0;
