@@ -24,11 +24,11 @@ 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
 #define RIGHT_EYE 1
 
 #define IS_BETWEEN(x, a, b) ((x) >= (a) && (x) <= (b))
-#define K_P 0.2
-#define K_D 0
-#define K_I 0.05
-#define DEFAULT_SPEED 10
-#define NUM_OF_SAMPLES 10
+#define K_P 0.3
+#define K_D 0.2
+#define K_I 0
+#define DEFAULT_SPEED 20
+#define NUM_OF_SAMPLES 2
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
@@ -110,14 +110,23 @@ void line_seeking()
                 add_to_array(analog_samples, error, NUM_OF_SAMPLES);
                 float derivative = calculate_average(analog_samples);
 
-                int leftMotorSpeed = 20 + K_P * error + K_D * derivative + K_I * (error + prev_error);
-                int rightMotorSpeed = 20 - K_P * error - K_D * derivative - K_I * (error + prev_error);
-		
+                int leftMotorSpeed = 25 + K_P * error + K_D * derivative + K_I * (error + prev_error);
+                int rightMotorSpeed = 25 - K_P * error - K_D * derivative - K_I * (error + prev_error);
+	
+//		int leftMotorSpeed = 20 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+//		int rightMotorSpeed = 20 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
+		if (error > 0 ) {
 
-        // Set motor speeds
-        motor(LEFT_MOTOR, leftMotorSpeed);
-        motor(RIGHT_MOTOR, rightMotorSpeed);
+        		motor(RIGHT_MOTOR, leftMotorSpeed);
+        		motor(LEFT_MOTOR, rightMotorSpeed);
+		}
+		else {
+
+        		// Set motor speeds
+        		motor(LEFT_MOTOR, leftMotorSpeed);
+        		motor(RIGHT_MOTOR, rightMotorSpeed);
+		}
 
         prev_error = error;
 
