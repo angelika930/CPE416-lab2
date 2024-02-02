@@ -15,13 +15,18 @@ it prints the motor speed on the screen.
 #include <avr/interrupt.h>
 #include <stdio.h>
 
+#define LEFT_MOTOR 0
+#define RIGHT_MOTOR 1
+
+#define LEFT_EYE 0
+#define RIGHT_EYE 1
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
   // speed will be a number from -100 (full speed reverse) to 
   //+100 (full speed forward).
         uint8_t adjusted_speed;
-        if (num == 0) //wheel 0
+        if (num == LEFT_MOTOR) //wheel 0
         {
                 adjusted_speed = (speed*3)/10 + 127;
                 lcd_cursor(0,0);
@@ -49,8 +54,8 @@ int8_t max = (direction)?(100):(-100);
 int8_t i = 0;
 while (i != max)
 { 
-        motor(0, i);
-        motor(1, i);
+        motor(LEFT_MOTOR, i);
+        motor(RIGHT_MOTOR, i);
         _delay_ms(100);
         if (direction)
                 i++;
@@ -65,8 +70,8 @@ void gradually_stop(uint8_t direction)
 int8_t i = (direction)?(100):(-100);
 while (i != 0)
 { 
-        motor(0, i);
-        motor(1, i);
+        motor(LEFT_MOTOR, i);
+        motor(RIGHT_MOTOR, i);
         _delay_ms(100);
         if (direction)
                 i--;
