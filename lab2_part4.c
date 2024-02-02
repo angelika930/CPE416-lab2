@@ -24,9 +24,9 @@ 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
 #define RIGHT_EYE 1
 
 #define IS_BETWEEN(x, a, b) ((x) >= (a) && (x) <= (b))
-#define K_P 0.5
+#define K_P 0.2
 #define K_D 0
-#define K_I 0
+#define K_I 0.05
 #define DEFAULT_SPEED 10
 #define NUM_OF_SAMPLES 10
 
@@ -110,9 +110,9 @@ void line_seeking()
                 add_to_array(analog_samples, error, NUM_OF_SAMPLES);
                 float derivative = calculate_average(analog_samples);
 
-                int leftMotorSpeed = 30 + K_P * error + K_D * derivative + K_I * (error + prev_error);
-                int rightMotorSpeed = 30 - K_P * error - K_D * derivative - K_I * (error + prev_error);
-
+                int leftMotorSpeed = 20 + K_P * error + K_D * derivative + K_I * (error + prev_error);
+                int rightMotorSpeed = 20 - K_P * error - K_D * derivative - K_I * (error + prev_error);
+		
 
 
         // Set motor speeds
