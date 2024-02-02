@@ -146,7 +146,9 @@ bool flag = false;
 
 while(1) 
 {  
-	
+	//Switch in between the Attraction and Shy state
+
+	//Attraction
 	while (flag == false) {
 		_delay_ms(300);
 		clear_screen();
@@ -158,6 +160,7 @@ while(1)
 			break;
 		}
 	}
+	//Shy
 	while (flag) {
 		_delay_ms(300);
 		clear_screen();
