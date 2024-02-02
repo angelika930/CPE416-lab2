@@ -1,3 +1,19 @@
+/*
+ Names: Christine Choi & Angelika Canete
+ Lab 2 Part 3
+
+Description:
+ The program programs Braitenberg vehicles 3a and 3b. On the 
+ push of a button, it toggles between two states of shy
+ and attraction. 
+ */
+
+
+
+
+
+
+
 
 #include "globals.h"
 #include <util/delay.h>
@@ -6,6 +22,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+
+#define MOTOR_STABLE 127
 
 u16 button_delay_check(u16 loop)
 {
@@ -32,12 +50,12 @@ void motor(uint8_t num, int8_t speed)
         uint8_t adjusted_speed;
         if (num == 0) //wheel 0
         {
-                adjusted_speed = (speed*3)/10 + 127;
+                adjusted_speed = (speed*3)/10 + MOTOR_STABLE;
                 set_servo(0, adjusted_speed); //fast
         }
         else    //wheel 1
         {
-                adjusted_speed = (-speed*3)/10 + 127;
+                adjusted_speed = (-speed*3)/10 + MOTOR_STABLE;
                 set_servo(1, adjusted_speed); //fast
         }
 }

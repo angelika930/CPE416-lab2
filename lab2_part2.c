@@ -1,12 +1,11 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 2
+//Lab 2 part 2
 //Description: 
 
 The program that implements Braitenberg vehicles 2a and 2b. 
 Pressing the on-board button should toggle between the 2 vehicles
-The display  show whichs vehicle is running
+The display show whichs vehicle is running: fear or aggression.
 
-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
 */
 
 #include "globals.h"
@@ -15,6 +14,9 @@ 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
 #include <avr/interrupt.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#define MOTOR_STABLE 127
+
 
 u16 button_delay_check(u16 loop)
 {
@@ -38,15 +40,16 @@ void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
   // speed will be a number from -100 (full speed reverse) to 
   //+100 (full speed forward).
+  //
         uint8_t adjusted_speed;
         if (num == 0) //wheel 0
         {
-                adjusted_speed = (speed*3)/10 + 127;
+                adjusted_speed = (speed*3)/10 + MOTOR_STABLE;
                 set_servo(0, adjusted_speed); //fast
         }
         else    //wheel 1
         {
-                adjusted_speed = (-speed*3)/10 + 127;
+                adjusted_speed = (-speed*3)/10 + MOTOR_STABLE;
                 set_servo(1, adjusted_speed); //fast
         }
 }
@@ -70,7 +73,6 @@ void fear(int state1, int state2) {
 	if (analog(3) > state1) {
 		motor(1, (state1 - (state1 * .50)));
 		state1 = analog(3);
-	//	_delay_ms(500);
 	}
 	else {
 		motor(1, (state1 + (state1 * .50)));
@@ -79,10 +81,8 @@ void fear(int state1, int state2) {
 	if (analog (4) > state2) {
 		motor(0, (state2 - (state2*.50)));
 		state2 = analog(4);
-	//	_delay_ms(500);
 	}
 	else {
-
 		motor(0, (state2 + (state2*.50)));
 		state2 = analog(4);
 	}
@@ -94,7 +94,6 @@ void aggression(int state1, int state2) {
 	if (analog(3) > state1) {
 		motor(1, (state1 + (state1 * .70)));
 		state1 = analog(3);
-	//	_delay_ms(500);
 	}
 	else {
 		motor(1, (state1 - (state1 * .70)));
@@ -103,7 +102,6 @@ void aggression(int state1, int state2) {
 	if (analog (4) > state2) {
 		motor(0, (state2 + (state2*.70)));
 		state2 = analog(4);
-	//	_delay_ms(500);
 	}
 	else {
 		motor(0, state2 - (state2*.50));
