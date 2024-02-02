@@ -5,10 +5,6 @@
 The program that implements Braitenberg vehicles 2a and 2b. 
 Pressing the on-board button should toggle between the 2 vehicles
 The display shows which vehicle is running: fear or aggression.
-Fear changes its speed by .50 to slowly steer away from the light,
-while aggression increases its speed by .70 to aggressively go
-towards the light.
-
 */
 
 #include "globals.h"
@@ -73,6 +69,12 @@ void sensor_update()
 	print_string(" ");
 }
 void fear(int state1, int state2) {
+	/* State 1 and State 2 track their motors previous state to keep track of if
+ 	   a light sensor detected more or less light.
+           If a sensor detects more light, it decreases its corresponding motor
+	   by .50 to go away from the light.
+	*/
+	
 	if (analog(3) > state1) {
 		motor(1, (state1 - (state1 * .50)));
 		state1 = analog(3);
@@ -94,6 +96,12 @@ void fear(int state1, int state2) {
 
 
 void aggression(int state1, int state2) {
+	/* State 1 and State 2 track their motor's previous state to keep track of if
+ 	   a light sensor detected more or less light.
+           If a sensor detects more light, it increases its corresponding motor
+	   by .70 to go towards the light.
+	*/
+	
 	if (analog(3) > state1) {
 		motor(1, (state1 + (state1 * .70)));
 		state1 = analog(3);
