@@ -1,14 +1,12 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 1
+//Lab 2 part 1
 //Description: 
 
 
-Write a program that:
-- gradually spins the motors to full speed forward
-- gradually slows the motors to a stop
-- does the same in the reverse motor direction and continuously repeats
-- while the program is running, print the motor speed on the screen
-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
+This program gradually spins the motors to full speed forward, 
+gradually slows the motors to a stop, does the same in the reverse motor direction,
+and continuously repeats. Additionally, while the program is running, 
+it prints the motor speed on the screen.
 */
 
 #include "globals.h"
