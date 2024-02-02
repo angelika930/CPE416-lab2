@@ -4,7 +4,10 @@
 
 The program that implements Braitenberg vehicles 2a and 2b. 
 Pressing the on-board button should toggle between the 2 vehicles
-The display show whichs vehicle is running: fear or aggression.
+The display shows which vehicle is running: fear or aggression.
+Fear changes its speed by .50 to slowly steer away from the light,
+while aggression increases its speed by .70 to aggressively go
+towards the light.
 
 */
 
