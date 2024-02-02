@@ -6,10 +6,9 @@ Description:
  The program programs Braitenberg vehicles 3a and 3b. On the 
  push of a button, it toggles between two states of shy
  and attraction. 
+ Shy causes the motors to decrease in speed of the opposite resistor and turn.
+ Attraction causes the motors to go towards the light slowly.
  */
-
-
-
 
 
 
@@ -62,6 +61,11 @@ void motor(uint8_t num, int8_t speed)
 
 
 void attraction(int state1, int state2) {
+	/*
+ 	Goes toward light slowly
+  	The motor speed is dependent of the rate of change of the two states
+  	State 1 and 2 track the previous values
+ */
 	if (analog(3) > state1) {
 		motor(1, (state1 - (state1 * .25)));
 		motor(0, (state1 - (state1 *.70)));
@@ -85,6 +89,10 @@ void attraction(int state1, int state2) {
 
 
 void shy(int state1, int state2) {
+ 	/*Goes away from the light slowly
+	The direction of the turn is indicated by the opposite motor
+ 	The rate of the motor is dependent on the rate of change*/
+	
 	if (analog(3) > state1) {
 		motor(1, (state1 - (state1 * .70)));
 		motor(0, (state1 - (state1 *.25)));
