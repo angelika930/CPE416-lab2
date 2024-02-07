@@ -120,7 +120,7 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 add_to_array(analog_samples, error, NUM_OF_SAMPLES);
                 derivative = calculate_average(analog_samples);
 
-                //PDI equation
+                //PID equation
 		leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
 		rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
