@@ -57,6 +57,11 @@ void motor(uint8_t num, int8_t speed)
         }
 }
 
+struct motor_command {
+        uint8_t left;
+        uint8_t right;
+
+} motor_command;
 
 void add_to_array(int analog_samples[], int added_num, int num_of_samples) 
 {
@@ -124,6 +129,9 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
         float derivative = calculate_average();
 
+        //PID equation
+        int leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+        int rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
         //PID equation
         int leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
         int rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
