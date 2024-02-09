@@ -28,6 +28,17 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define NUM_OF_SAMPLES 5
 #define MOTOR_STABLE 127        //motors do not move at 127
 
+
+struct motor_command {
+        uint8_t left;
+        uint8_t right;
+
+} motor_command;
+
+static struct motor_command sensor_val[50];
+int a = 0;
+
+
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
   // speed will be a number from -100 (full speed reverse) to 
@@ -46,11 +57,6 @@ void motor(uint8_t num, int8_t speed)
         }
 }
 
-struct motor_command {
-        uint8_t left;
-        uint8_t right;
-
-} motor_command;
 
 void add_to_array(int analog_samples[], int added_num, int num_of_samples) 
 {
@@ -61,14 +67,30 @@ void add_to_array(int analog_samples[], int added_num, int num_of_samples)
     analog_samples[0] = added_num;
 }
 
-float calculate_average(int analog_samples[NUM_OF_SAMPLES]) 
+float calculate_average() 
 {
-    int sum = 0;
-    for (int i = 0; i < NUM_OF_SAMPLES; i++) {
-        sum += analog_samples[i];
-    }
-   return (float)sum / NUM_OF_SAMPLES;
+        struct motor_command curr_struct = sensor_val[a];
+        int sum = 0;
+        int  error = 0;
+        int i = 0;
+        if (a < NUM_OF_SAMPLES)
+        {
+                i = a;
+        }
+        else{
+                i = 5;
+        }    
+        for (int b = i; b < NUM_OF_SAMPLES; b--) 
+        {
+
+                error = sensor_val[a-b].left - sensor_val[a-b].right;
+                sum = error + sum;
+        }
+        
+        return (float)sum / NUM_OF_SAMPLES;
 }
+
+
 
 void button_pause()
 {//pauses the motor without needing a disconnect the wires
@@ -86,7 +108,7 @@ void button_pause()
         }
 }
 
-struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right, int error, int NUM_OF_SAMPLES, int derivative, int analog_samples) 
+struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
@@ -96,38 +118,24 @@ If a sensor does not see the corrrect value,  correct by the PDI
         //pause motors if button was pressed
         button_pause();
 
-        // sensor values 
-        curr_left = (analog(LEFT_EYE));
-        curr_right = (analog(RIGHT_EYE));
-
-        //print
-        lcd_cursor(0, 0);
-        print_string("L: ");
-        print_num(curr_left);
-        print_string("    ");
-        lcd_cursor(0, 1);
-        print_string("R: ");
-        print_num(curr_right);  
-        print_string("    ");
-
         //find derivative
-        error = curr_left - curr_right;
-        add_to_array(analog_samples, error, NUM_OF_SAMPLES);
-        derivative = calculate_average(analog_samples);
+        uint8_t error = curr_left - curr_right;
+        static uint8_t prev_error; 
+
+        float derivative = calculate_average();
 
         //PID equation
         int leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
         int rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
         //set the motors
-        prev_error = error;
-
         struct motor_command res;
         res.left = leftMotorSpeed;
         res.right = rightMotorSpeed;
+
+
+        prev_error = error;
         return res;
-
-
 
     
 }
@@ -140,33 +148,39 @@ int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
-
-int a = 0;
 int prev_error = 0;
-int analog_samples[NUM_OF_SAMPLES] = {0};
-int error = 0;
-float derivative = 0;
-int leftMotorSpeed = 0;
-int rightMotorSpeed = 0;
 uint8_t curr_left = 0;
 uint8_t curr_right = 0;
-struct motor_command sensor_val[50];
 
 while(a < 50) 
 {  
+        
+                // sensor values 
+        curr_left = (analog(LEFT_EYE));
+        curr_right = (analog(RIGHT_EYE));
 
-
-      
-        struct motor_command curr_reading = compute_proportional(curr_left, curr_right, error, NUM_OF_SAMPLES, derivative, analog_samples);
+        struct motor_command curr_reading = compute_proportional(curr_left, curr_right);
 
         //Add output to an array of structs
         sensor_val[a] = curr_reading;
         _delay_ms(300);
+        clear_screen();
+        lcd_cursor(0, 0);
+
         print_num(sensor_val[a].left);
+        lcd_cursor(0, 1);
         print_num(sensor_val[a].right);
 
+
+        motor(0, sensor_val[a].left);
+        motor(0, sensor_val[a].left);
+
         a++;
+
 }
+        clear_screen();
+        lcd_cursor(0, 0);
+        print_string("victory!");
 
 return 0;
 }
