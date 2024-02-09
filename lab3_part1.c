@@ -46,6 +46,11 @@ void motor(uint8_t num, int8_t speed)
         }
 }
 
+struct motor_command {
+        uint8_t left;
+        uint8_t right;
+
+} motor_command;
 
 void add_to_array(int analog_samples[], int added_num, int num_of_samples) 
 {
@@ -81,65 +86,86 @@ void button_pause()
         }
 }
 
-void line_seeking()
+struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right, int error, int NUM_OF_SAMPLES, int derivative, int analog_samples) 
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
 If a sensor does not see the corrrect value,  correct by the PDI 
 */
-    int curr_left = 0;
-    int curr_right = 0;
-    int prev_error = 0;
-    int analog_samples[NUM_OF_SAMPLES] = {0};
-    int error = 0;
-    float derivative = 0;
-    int leftMotorSpeed = 0;
-    int rightMotorSpeed = 0;
+    
+        //pause motors if button was pressed
+        button_pause();
 
-        while (true) 
-        {
-                //pause motors if button was pressed
-                button_pause();
+        // sensor values 
+        curr_left = (analog(LEFT_EYE));
+        curr_right = (analog(RIGHT_EYE));
 
-                // sensor values 
-                curr_left = (analog(LEFT_EYE));
-                curr_right = (analog(RIGHT_EYE));
+        //print
+        lcd_cursor(0, 0);
+        print_string("L: ");
+        print_num(curr_left);
+        print_string("    ");
+        lcd_cursor(0, 1);
+        print_string("R: ");
+        print_num(curr_right);  
+        print_string("    ");
 
-                //print
-                lcd_cursor(0, 0);
-                print_string("L: ");
-                print_num(curr_left);
-                print_string("    ");
-                lcd_cursor(0, 1);
-                print_string("R: ");
-                print_num(curr_right);  
-                print_string("    ");
+        //find derivative
+        error = curr_left - curr_right;
+        add_to_array(analog_samples, error, NUM_OF_SAMPLES);
+        derivative = calculate_average(analog_samples);
 
-                //find derivative
-                error = curr_left - curr_right;
-                add_to_array(analog_samples, error, NUM_OF_SAMPLES);
-                derivative = calculate_average(analog_samples);
+        //PID equation
+        int leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+        int rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
-                //PID equation
-		leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
-		rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
+        //set the motors
+        prev_error = error;
 
-                //set the motors
-                motor(LEFT_MOTOR, leftMotorSpeed);
-                motor(RIGHT_MOTOR, rightMotorSpeed);
+        struct motor_command res;
+        res.left = leftMotorSpeed;
+        res.right = rightMotorSpeed;
+        return res;
 
-                prev_error = error;
-    }
+
+
+    
 }
+
+///pretty sure either put a while loop in the function or in the main
+
+
 
 int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
 
-while(1) 
+int a = 0;
+int prev_error = 0;
+int analog_samples[NUM_OF_SAMPLES] = {0};
+int error = 0;
+float derivative = 0;
+int leftMotorSpeed = 0;
+int rightMotorSpeed = 0;
+uint8_t curr_left = 0;
+uint8_t curr_right = 0;
+struct motor_command sensor_val[50];
+
+while(a < 50) 
 {  
-        line_seeking();
+
+
+      
+        struct motor_command curr_reading = compute_proportional(curr_left, curr_right, error, NUM_OF_SAMPLES, derivative, analog_samples);
+
+        //Add output to an array of structs
+        sensor_val[a] = curr_reading;
+        _delay_ms(300);
+        print_num(sensor_val[a].left);
+        print_num(sensor_val[a].right);
+
+        a++;
 }
 
 return 0;
