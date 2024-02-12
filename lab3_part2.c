@@ -283,6 +283,16 @@ void display_tiltable_text()
 
 }
 
+void training_mode(int interations)
+{//train neural network
+
+}
+
+
+int get_training_itertions()
+{//use accel and a button press to return the desired number
+
+}
 
 
 int main(void) 
