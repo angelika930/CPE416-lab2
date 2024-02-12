@@ -176,9 +176,6 @@ int main(void) {
    motor(0, 0);
    motor(1, 0);
 
-//porportional phase
-
-//data phase
 line_seeking();
 
 

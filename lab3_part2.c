@@ -114,6 +114,10 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         curr_motor_command.left = leftMotorSpeed;
         curr_motor_command.right = rightMotorSpeed;
 
+
+        motor(LEFT_MOTOR, leftMotorSpeed);
+        motor(RIGHT_MOTOR, rightMotorSpeed);
+
         prev_error = error;
 
         return curr_motor_command;
@@ -130,7 +134,7 @@ If a sensor does not see the corrrect value,  correct by the PDI
         int curr_left = 0;
         int curr_right = 0;
 
-        struct motor_command sensor_val[50] = {0};
+        struct motor_command sensor_val[50];
         int sample_count = 0;
         // sensor values 
 
@@ -142,6 +146,19 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
                 struct motor_command curr_reading = compute_proportional(curr_left, curr_right);
                 sensor_val[sample_count] = curr_reading;
+
+                clear_screen();
+                lcd_cursor(0, 0);
+                print_string("L: ");
+                print_num(curr_reading.left);
+                print_string("    ");
+                lcd_cursor(0, 1);
+                print_string("R: ");
+                print_num(curr_reading.right);  
+                print_string("    ");
+
+
+                _delay_ms(300);
         }
 
         clear_screen();
@@ -159,9 +176,7 @@ int main(void) {
    motor(0, 0);
    motor(1, 0);
 
-
-//collection phase
-        line_seeking();
+line_seeking();
 
 
 return 0;
