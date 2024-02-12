@@ -105,15 +105,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 curr_left = (analog(LEFT_EYE));
                 curr_right = (analog(RIGHT_EYE));
 
-                //print
-                lcd_cursor(0, 0);
-                print_string("L: ");
-                print_num(curr_left);
-                print_string("    ");
-                lcd_cursor(0, 1);
-                print_string("R: ");
-                print_num(curr_right);  
-                print_string("    ");
 
                 //find derivative
                 error = curr_left - curr_right;
@@ -121,12 +112,24 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 derivative = calculate_average(analog_samples);
 
                 //PID equation
-		leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
-		rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
+		leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+		rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
                 motor(RIGHT_MOTOR, rightMotorSpeed);
+
+
+                //print
+                clear_screen();
+                lcd_cursor(0, 0);
+                print_string("L: ");
+                print_num(leftMotorSpeed);
+                print_string("    ");
+                lcd_cursor(0, 1);
+                print_string("R: ");
+                print_num(rightMotorSpeed);  
+                print_string("    ");
 
                 prev_error = error;
     }
