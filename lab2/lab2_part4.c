@@ -22,7 +22,7 @@ The robot will follow 3 tracks, a circle, square and an oval.
 
 #define IS_BETWEEN(x, a, b) ((x) >= (a) && (x) <= (b))
 #define K_P 0.2
-#define K_D 0
+#define K_D 0.1
 #define K_I 0.05
 #define DEFAULT_SPEED 20
 #define NUM_OF_SAMPLES 5
@@ -121,8 +121,8 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 derivative = calculate_average(analog_samples);
 
                 //PID equation
-		leftMotorSpeed = 25 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
-		rightMotorSpeed = 25 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
+		leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
+		rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
