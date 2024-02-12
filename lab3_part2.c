@@ -35,6 +35,8 @@ struct motor_command {
 
 } motor_command;
 
+struct motor_command sensor_val[50];
+int sample_count = 0;
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
@@ -131,9 +133,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
 */
         int curr_left = 0;
         int curr_right = 0;
-
-        struct motor_command sensor_val[50];
-        int sample_count = 0;
         // sensor values 
 
         for (sample_count = 0; sample_count < NUM_OF_COLLECTED_SAMPLES; sample_count++)
@@ -292,6 +291,9 @@ void training_mode(int interations)
 int get_training_itertions()
 {//use accel and a button press to return the desired number
 
+int input_number = 0;
+
+return input_number;
 }
 
 
@@ -311,9 +313,12 @@ int main(void)
    data_collection();
 
 //get training interations
-
+int interations = get_training_itertions();
 
 //training mode
+
+training_mode(interations);
+
 
 
 //nerual network
