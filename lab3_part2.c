@@ -57,21 +57,22 @@ void motor(uint8_t num, int8_t speed)
 
 
 
+u16 button_delay_check(u16 loop)
+{
+    //acts as a delay_ms function that also checks for a button press
 
-void button_pause()
-{//pauses the motor without needing a disconnect the wires
-//reset to play again
-        if (get_btn())
+        u16 count = 0;
+        int button_flag = 0;
+        while (count < loop)
         {
-                motor(0, 0);
-                motor(1, 0);
-                clear_screen();
-                print_string("paused");
-                while(1)
-                        {
-                                
-                        }
+            if (get_btn()==1)
+            {
+                button_flag = 1;
+            }
+            _delay_ms(1);
+            count ++;
         }
+        return button_flag;
 }
 
 void add_to_error_array(int added_num, int error_samples[NUM_OF_ERROR_SAMPLES]) 
@@ -115,9 +116,6 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         curr_motor_command.right = rightMotorSpeed;
 
 
-        motor(LEFT_MOTOR, leftMotorSpeed);
-        motor(RIGHT_MOTOR, rightMotorSpeed);
-
         prev_error = error;
 
         return curr_motor_command;
@@ -125,7 +123,7 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 }
 
 
-void line_seeking()
+void data_collection()
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
@@ -146,19 +144,26 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
                 struct motor_command curr_reading = compute_proportional(curr_left, curr_right);
                 sensor_val[sample_count] = curr_reading;
+;
 
                 clear_screen();
                 lcd_cursor(0, 0);
-                print_string("L: ");
-                print_num(curr_reading.left);
+                print_string("Data:");
+                print_num(sample_count);  
                 print_string("    ");
+
                 lcd_cursor(0, 1);
-                print_string("R: ");
-                print_num(curr_reading.right);  
-                print_string("    ");
+                print_string("L");
+                print_num(curr_left);  
+                lcd_cursor(4, 1);
+                print_string("R");
+                print_num(curr_right);  
 
 
-                _delay_ms(300);
+                if (button_delay_check(300))
+                {//move to training
+                        break;
+                }
         }
 
         clear_screen();
@@ -168,6 +173,64 @@ If a sensor does not see the corrrect value,  correct by the PDI
 }
 
 
+void line_seeking_PID()
+{/*
+Measure the outside of the lines
+If both sensors see the same value, assume they are on the correct side of the line
+If a sensor does not see the corrrect value,  correct by the PDI 
+*/
+    int curr_left = 0;
+    int curr_right = 0;
+    int prev_error = 0;
+    int analog_samples[NUM_OF_ERROR_SAMPLES] = {0};
+    int error = 0;
+    float derivative = 0;
+    int leftMotorSpeed = 0;
+    int rightMotorSpeed = 0;
+
+        while (true) 
+        {
+                //pause motors if button was pressed
+
+                if (button_delay_check(300))
+                {//move to data collection
+                        break;
+                }
+
+                // sensor values 
+                curr_left = (analog(LEFT_EYE));
+                curr_right = (analog(RIGHT_EYE));
+
+
+                //find derivative
+                error = curr_left - curr_right;
+                add_to_error_array(error, analog_samples);
+                derivative = calculate_average_error(analog_samples);
+
+                //PID equation
+		leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+		rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
+
+                //set the motors
+                motor(LEFT_MOTOR, leftMotorSpeed);
+                motor(RIGHT_MOTOR, rightMotorSpeed);
+
+
+                //print
+                clear_screen();
+                lcd_cursor(0, 0);
+                print_string("Proportional:");
+
+                lcd_cursor(0, 1);
+                print_string("L");
+                print_num(curr_left);
+                lcd_cursor(4, 1);
+                print_string("R");
+                print_num(curr_right);  
+
+                prev_error = error;
+    }
+}
 
 
 
@@ -175,8 +238,14 @@ int main(void) {
    init();  //initialize board hardware
    motor(0, 0);
    motor(1, 0);
+   
+   //porportional
+   line_seeking_PID();
 
-line_seeking();
+
+   motor(0, 0);
+   motor(1, 0);
+   data_collection();
 
 
 return 0;

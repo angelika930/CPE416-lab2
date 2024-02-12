@@ -168,6 +168,60 @@ If a sensor does not see the corrrect value,  correct by the PDI
 }
 
 
+void line_seeking()
+{/*
+Measure the outside of the lines
+If both sensors see the same value, assume they are on the correct side of the line
+If a sensor does not see the corrrect value,  correct by the PDI 
+*/
+    int curr_left = 0;
+    int curr_right = 0;
+    int prev_error = 0;
+    int analog_samples[NUM_OF_SAMPLES] = {0};
+    int error = 0;
+    float derivative = 0;
+    int leftMotorSpeed = 0;
+    int rightMotorSpeed = 0;
+
+        while (true) 
+        {
+                //pause motors if button was pressed
+                button_pause();
+
+                // sensor values 
+                curr_left = (analog(LEFT_EYE));
+                curr_right = (analog(RIGHT_EYE));
+
+
+                //find derivative
+                error = curr_left - curr_right;
+                add_to_array(analog_samples, error, NUM_OF_SAMPLES);
+                derivative = calculate_average(analog_samples);
+
+                //PID equation
+		leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+		rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
+
+                //set the motors
+                motor(LEFT_MOTOR, leftMotorSpeed);
+                motor(RIGHT_MOTOR, rightMotorSpeed);
+
+
+                //print
+                clear_screen();
+                lcd_cursor(0, 0);
+                print_string("L: ");
+                print_num(leftMotorSpeed);
+                print_string("    ");
+                lcd_cursor(0, 1);
+                print_string("R: ");
+                print_num(rightMotorSpeed);  
+                print_string("    ");
+
+                prev_error = error;
+    }
+}
+
 
 
 
