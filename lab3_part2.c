@@ -30,27 +30,28 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define NUM_OF_COLLECTED_SAMPLES 50
 #define MOTOR_STABLE 127        //motors do not move at 127
 
-struct motor_command {
+struct motor_command 
+{
         uint8_t left;
         uint8_t right;
-
 } motor_command;
 
 struct pure_data 
 {
     uint8_t left;
     uint8_t right;
+} pure_data;
 
-}
 struct pure_data sensor_val[50];
 int sample_count = 0;
 
 struct neural_node {
-    double w1 = 0;
-    double w2 = 0;
-    double w3 = 0;
-    double bias = 0;
+    double w1;
+    double w2;
+    double w3;
+    double bias;
 } neural_node;
+
 struct neural_node network[5];
 
 
@@ -71,9 +72,6 @@ void motor(uint8_t num, int8_t speed)
                 set_servo(LEFT_MOTOR, adjusted_speed); 
         }
 }
-
-
-
 
 u16 button_delay_check(u16 loop)
 {
@@ -111,7 +109,6 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
-
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
         struct motor_command curr_motor_command =  {0};
@@ -140,7 +137,6 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 
 }
 
-
 void network_init()
 {
     //randomize weights on initialization
@@ -152,28 +148,21 @@ void network_init()
     network[1].w2 = rand()/ RAND_MAX;
     network[1].bias = rand()/ RAND_MAX;
 
-
     network[2].w1 = rand()/ RAND_MAX;
     network[2].w2 = rand()/ RAND_MAX;
     network[2].bias = rand()/ RAND_MAX;
 
 
-
-
-    //output bias
-    double out_bias1 = rand()/ RAND_MAX;
-    double out_bias2 = rand()/ RAND_MAX;
-
     //output layer weights
     network[3].w1 = rand()/ RAND_MAX;
     network[3].w2 = rand()/ RAND_MAX;
     network[3].w3 = rand()/ RAND_MAX;
+    network[3].bias = rand()/ RAND_MAX;
 
     network[4].w1 = rand()/ RAND_MAX;
     network[4].w2 = rand()/ RAND_MAX;
     network[4].w3 = rand()/ RAND_MAX;
-    
-
+    network[3].bias = rand()/ RAND_MAX;
 
 }
 
@@ -198,8 +187,8 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
     computed_nodes.left = o1_net;
     computed_nodes.right = o2_net;
 
+    return computed_nodes;
 }
-
 
 void data_collection()
 {/*
@@ -215,14 +204,12 @@ If a sensor does not see the corrrect value,  correct by the PDI
         {
                 curr_left = (analog(LEFT_EYE));
                 curr_right = (analog(RIGHT_EYE));
-
             
-                struct motor_command curr_reading;
+                struct pure_data curr_reading;
                 curr_reading.left = curr_left;
                 curr_reading.right = curr_right;
 
                 sensor_val[sample_count] = curr_reading;
-;
 
                 clear_screen();
                 lcd_cursor(0, 0);
@@ -237,25 +224,22 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 print_string("R");
                 print_num(curr_right);  
 
-
                 if (button_delay_check(300))
                 {//move to training
                         break;
                 }
         }
-
         clear_screen();
         lcd_cursor(0, 0);
         print_string("victory!");
 
 }
 
-
 void line_seeking_PID()
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
-If a sensor does not see the corrrect value,  correct by the PDI 
+If a sensor does not see the corrrect value, correct by the PDI 
 */
     int curr_left = 0;
     int curr_right = 0;
@@ -269,7 +253,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
         while (true) 
         {
                 //pause motors if button was pressed
-
                 if (button_delay_check(300))
                 {//move to data collection
                         break;
@@ -310,7 +293,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
     }
 }
 
-
 void delay(u16 loop)
 {
         u16 count = 0;
@@ -321,52 +303,10 @@ void delay(u16 loop)
         }
 }
 
-
-
-void display_tiltable_text()
-{
-    //start position
-    print_num(416);
-
-    int row = 0;
-    int col = 4;
-
-    while(1)
-    {
-        if ((get_accel_y() > 30 && get_accel_y()< 70 ) & (col > 0) )
-        {//to the left
-            col--;
-        }
-        if ( (get_accel_y() > 200 && get_accel_y()  < 250 ) & (col < 5) ) 
-        {//to the right
-            col++;
-        }
-
-        if ((get_accel_x() > 200 && get_accel_x()< 230 ))
-        {// move down
-            row = 1;
-        }
-        if ( (get_accel_x() > 20 && get_accel_x() < 70 ) ) 
-        {//move up
-            row = 0;
-        }
-
-        //print 416
-        clear_screen();
-        lcd_cursor(col, row);
-        print_num(416);
-        delay(50);
-
-    }
-
-}
-
 void training_mode(int interations)
 {//train neural network
 
 }
-
-
 
 int get_training_itertions()
 {
@@ -422,20 +362,21 @@ int main(void)
    //proportional
    line_seeking_PID();
 
-
     //data collection
     motor(0, 0);
     motor(1, 0);
     data_collection();
+    network_init();
 
     //get training iterations
-    int iterations = get_training_iterations();
+    int iterations = get_training_itertions();
 
     for (int i = 0; i < iterations; i++) 
     {
-        for (int j = 0; j < len(sensor_val); j++) 
+        for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
         {
-        struct motor_command measured = compute_proportional();
+        struct motor_command theorethical = compute_proportional(sensor_val[j].left, sensor_val[j].right);
+        struct motor_command measured = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
 
 
         }
