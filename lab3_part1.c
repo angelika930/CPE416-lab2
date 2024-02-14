@@ -172,7 +172,7 @@ void line_seeking()
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
-If a sensor does not see the corrrect value,  correct by the PDI 
+If a sensor does not see the corrrect value,  correct by the PID
 */
     int curr_left = 0;
     int curr_right = 0;

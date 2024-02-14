@@ -125,6 +125,25 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 }
 
 
+struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right)
+{
+        struct motor_command curr_motor_command =  {0};
+        static int error_samples[NUM_OF_ERROR_SAMPLES] = {0};
+
+       
+
+        //set the motors
+        curr_motor_command.left = leftMotorSpeed;
+        curr_motor_command.right = rightMotorSpeed;
+
+
+        prev_error = error;
+
+        return curr_motor_command;
+
+}
+
+
 void data_collection()
 {/*
 Measure the outside of the lines
@@ -140,8 +159,11 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 curr_left = (analog(LEFT_EYE));
                 curr_right = (analog(RIGHT_EYE));
 
+            
+                struct motor_command curr_reading;
+                curr_reading.left = curr_left;
+                curr_reading.right = curr_right;
 
-                struct motor_command curr_reading = compute_proportional(curr_left, curr_right);
                 sensor_val[sample_count] = curr_reading;
 ;
 
@@ -207,8 +229,8 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 derivative = calculate_average_error(analog_samples);
 
                 //PID equation
-		leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
-		rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
+                leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_P * derivative;	
+                rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_P * derivative;	
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
@@ -303,25 +325,31 @@ int main(void)
    motor(0, 0);
    motor(1, 0);
    
-   //porportional
+   //proportional
    line_seeking_PID();
 
 
-//data collection
-   motor(0, 0);
-   motor(1, 0);
-   data_collection();
+    //data collection
+    motor(0, 0);
+    motor(1, 0);
+    data_collection();
 
-//get training interations
-int interations = get_training_itertions();
+    //get training iterations
+    int iterations = get_training_itertions();
 
-//training mode
+    for (int i = 0; i < iterations; i++) 
+    {
+        struct motor_command measured = compute_proportional(motor)
 
-training_mode(interations);
+    }
+
+    //training mode
+
+    training_mode(iterations);
 
 
 
-//nerual network
+//neural network
 
 return 0;
 }
