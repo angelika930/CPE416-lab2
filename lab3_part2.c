@@ -13,6 +13,7 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define LEFT_MOTOR 0
 #define RIGHT_MOTOR 1
@@ -35,8 +36,23 @@ struct motor_command {
 
 } motor_command;
 
-struct motor_command sensor_val[50];
+struct pure_data 
+{
+    uint8_t left;
+    uint8_t right;
+
+}
+struct pure_data sensor_val[50];
 int sample_count = 0;
+
+struct neural_node {
+    double w1 = 0;
+    double w2 = 0;
+    double w3 = 0;
+    double bias = 0;
+} neural_node;
+struct neural_node network[5];
+
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
@@ -125,21 +141,62 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 }
 
 
-struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right)
+void network_init()
 {
-        struct motor_command curr_motor_command =  {0};
-        static int error_samples[NUM_OF_ERROR_SAMPLES] = {0};
+    //randomize weights on initialization
+    network[0].w1 = rand()/ RAND_MAX;
+    network[0].w2 = rand()/ RAND_MAX;
+    network[0].bias = rand()/ RAND_MAX;
 
-       
-
-        //set the motors
-        curr_motor_command.left = leftMotorSpeed;
-        curr_motor_command.right = rightMotorSpeed;
+    network[1].w1 = rand()/ RAND_MAX;
+    network[1].w2 = rand()/ RAND_MAX;
+    network[1].bias = rand()/ RAND_MAX;
 
 
-        prev_error = error;
+    network[2].w1 = rand()/ RAND_MAX;
+    network[2].w2 = rand()/ RAND_MAX;
+    network[2].bias = rand()/ RAND_MAX;
 
-        return curr_motor_command;
+
+
+
+    //output bias
+    double out_bias1 = rand()/ RAND_MAX;
+    double out_bias2 = rand()/ RAND_MAX;
+
+    //output layer weights
+    network[3].w1 = rand()/ RAND_MAX;
+    network[3].w2 = rand()/ RAND_MAX;
+    network[3].w3 = rand()/ RAND_MAX;
+
+    network[4].w1 = rand()/ RAND_MAX;
+    network[4].w2 = rand()/ RAND_MAX;
+    network[4].w3 = rand()/ RAND_MAX;
+    
+
+
+}
+
+struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
+{
+    //calculate net value
+    double h1_net = (curr_left * network[0].w1 + curr_right * network[0].w2) - network[0].bias;
+    double h2_net = (curr_left * network[1].w1 + curr_right * network[1].w2) - network[1].bias;
+    double h3_net = (curr_left * network[2].w1 + curr_right * network[2].w2) - network[2].bias;
+
+    //sigmoid calculation
+    double sigmoid1 = 1/(1 + exp(-(h1_net)));
+    double sigmoid2 = 1/(1 + exp(-(h2_net)));
+    double sigmoid3 = 1/(1 + exp(-(h3_net)));
+
+    //outer layer equation
+    double o1_net = (sigmoid1 * network[3].w1 + sigmoid2 * network[3].w2 + sigmoid3 * network[3].w3) - network[3].bias;
+    double o2_net = (sigmoid1 * network[4].w1 + sigmoid2 * network[4].w2 + sigmoid3 * network[4].w3) - network[4].bias;
+
+    //outputs predicted motor values
+    struct motor_command computed_nodes;
+    computed_nodes.left = o1_net;
+    computed_nodes.right = o2_net;
 
 }
 
@@ -335,12 +392,17 @@ int main(void)
     data_collection();
 
     //get training iterations
-    int iterations = get_training_itertions();
+    int iterations = get_training_iterations();
 
     for (int i = 0; i < iterations; i++) 
     {
-        struct motor_command measured = compute_proportional(motor)
+        for (int j = 0; j < len(sensor_val); j++) 
+        {
+        struct motor_command measured = compute_proportional();
 
+
+        }
+        
     }
 
     //training mode
