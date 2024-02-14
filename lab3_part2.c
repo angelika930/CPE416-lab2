@@ -310,14 +310,51 @@ void training_mode(int interations)
 }
 
 
+
 int get_training_itertions()
-{//use accel and a button press to return the desired number
+{
+    //recieve user input by tiling 
+    lcd_cursor(0, 0);
+    print_string("<=-  +=>");
+    int iterations = 0;
 
-int input_number = 0;
+    while(1)
+    {
+        if ((get_accel_y() > 30 && get_accel_y()< 70 ))
+        {//to the left
+            iterations--;
+        }
+        if ( (get_accel_y() > 200 && get_accel_y()  < 250 )) 
+        {//to the right
+            iterations++;
+        }
+        if ((get_accel_x() > 200 && get_accel_x()< 230 ))
+        {// move down
+            iterations = iterations - 10;
+        }
+        if ( (get_accel_x() > 20 && get_accel_x() < 70 ) ) 
+        {//move up
+            iterations = iterations + 10;
+        }
 
-return input_number;
+        if (iterations < 0)
+        {//no negatives!
+                iterations = 0;
+        }
+
+        //print 416
+        lcd_cursor(0, 1);
+        print_num(iterations);
+        print_string("       ");
+        if (button_delay_check(50))
+        {
+                return iterations;
+        }
+
+    }
+    return 0;
+
 }
-
 
 int main(void) 
 {
