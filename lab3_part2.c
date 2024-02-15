@@ -110,6 +110,16 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
+uint8_t normalize(uint8_t value) 
+{
+    return (value * 100) / 255;
+}
+
+uint8_t denormalize(uint8_t value) 
+{
+        return (value * 255) / 100;
+}
+
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
         struct motor_command curr_motor_command =  {0};
@@ -128,8 +138,8 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         int rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
 
         //set the motors
-        curr_motor_command.left = leftMotorSpeed;
-        curr_motor_command.right = rightMotorSpeed;
+        curr_motor_command.left = normalize(leftMotorSpeed);
+        curr_motor_command.right = normalize(rightMotorSpeed);
 
 
         prev_error = error;
@@ -163,32 +173,8 @@ void network_init()
     network[4].w1 = rand()/ RAND_MAX;
     network[4].w2 = rand()/ RAND_MAX;
     network[4].w3 = rand()/ RAND_MAX;
-    network[3].bias = rand()/ RAND_MAX;
+    network[4].bias = rand()/ RAND_MAX;
 
-}
-
-struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
-{
-    //calculate net value
-    double h1_net = (curr_left * network[0].w1 + curr_right * network[0].w2) - network[0].bias;
-    double h2_net = (curr_left * network[1].w1 + curr_right * network[1].w2) - network[1].bias;
-    double h3_net = (curr_left * network[2].w1 + curr_right * network[2].w2) - network[2].bias;
-
-    //sigmoid calculation
-    double sigmoid1 = 1/(1 + exp(-(h1_net)));
-    double sigmoid2 = 1/(1 + exp(-(h2_net)));
-    double sigmoid3 = 1/(1 + exp(-(h3_net)));
-
-    //outer layer equation
-    double o1_net = (sigmoid1 * network[3].w1 + sigmoid2 * network[3].w2 + sigmoid3 * network[3].w3) - network[3].bias;
-    double o2_net = (sigmoid1 * network[4].w1 + sigmoid2 * network[4].w2 + sigmoid3 * network[4].w3) - network[4].bias;
-
-    //outputs predicted motor values
-    struct motor_command computed_nodes;
-    computed_nodes.left = o1_net;
-    computed_nodes.right = o2_net;
-
-    return computed_nodes;
 }
 
 void data_collection()
@@ -365,6 +351,35 @@ int get_training_itertions()
 
 }
 
+void update_output_weights(int left_error, int right_error)
+{
+
+}
+
+struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
+{
+    //calculate net value
+    double h1_net = (curr_left * network[0].w1 + curr_right * network[0].w2) - network[0].bias;
+    double h2_net = (curr_left * network[1].w1 + curr_right * network[1].w2) - network[1].bias;
+    double h3_net = (curr_left * network[2].w1 + curr_right * network[2].w2) - network[2].bias;
+
+    //sigmoid calculation
+    double sigmoid1 = 1/(1 + exp(-(h1_net)));
+    double sigmoid2 = 1/(1 + exp(-(h2_net)));
+    double sigmoid3 = 1/(1 + exp(-(h3_net)));
+
+    //outer layer equation
+    double o1_net = (sigmoid1 * network[3].w1 + sigmoid2 * network[3].w2 + sigmoid3 * network[3].w3) - network[3].bias;
+    double o2_net = (sigmoid1 * network[4].w1 + sigmoid2 * network[4].w2 + sigmoid3 * network[4].w3) - network[4].bias;
+
+    //outputs predicted motor values
+    struct motor_command computed_nodes;
+    computed_nodes.left = o1_net;
+    computed_nodes.right = o2_net;
+
+    return computed_nodes;
+}
+
 int main(void) 
 {
    init();  //initialize board hardware
@@ -388,8 +403,13 @@ int main(void)
     {
         for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
         {
-        struct motor_command theoretical = compute_proportional(sensor_val[j].left, sensor_val[j].right);
-        struct motor_command measured = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
+        struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
+        struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
+
+        int error_left = target.left - out.left;
+        int error_right = target.right - out.right;
+
+        update_weights(error_left, error_right);
 
 
         }
