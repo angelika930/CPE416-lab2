@@ -29,6 +29,7 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define NUM_OF_ERROR_SAMPLES 5
 #define NUM_OF_COLLECTED_SAMPLES 50
 #define MOTOR_STABLE 127        //motors do not move at 127
+#define LEARN_RATE .145
 
 struct motor_command 
 {
@@ -235,6 +236,17 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
 }
 
+void train_neural_network(uint8_t curr_left, uint8_t curr_right) 
+{
+    //represents partial derivate of E total
+    float Etotal = 2 * 0.5 * (measured - theoretical)-1;
+    
+    //partial derivative of weight
+    //float der_weight    how do i find a partial derivative of a number???
+
+    //new weight = old weight - LEARN_RATE * (Etotal / der_weight)
+}
+
 void line_seeking_PID()
 {/*
 Measure the outside of the lines
@@ -370,12 +382,13 @@ int main(void)
 
     //get training iterations
     int iterations = get_training_itertions();
+    network_init();
 
     for (int i = 0; i < iterations; i++) 
     {
         for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
         {
-        struct motor_command theorethical = compute_proportional(sensor_val[j].left, sensor_val[j].right);
+        struct motor_command theoretical = compute_proportional(sensor_val[j].left, sensor_val[j].right);
         struct motor_command measured = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
 
 
