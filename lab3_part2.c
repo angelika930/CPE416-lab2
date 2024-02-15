@@ -353,7 +353,28 @@ int get_training_itertions()
 
 void update_output_weights(int left_error, int right_error)
 {
+    int total_error = left_error + right_error;
+    int new0_w1 = network[0].w1 - LEARN_RATE* ; 
+    int new0_w2; 
+    int new0_bias; 
 
+    int new1_w1; 
+    int new1_w2; 
+    int new1_bias; 
+
+    int new2_w1; 
+    int new2_w2; 
+    int new2_bias; 
+
+    int new3_w1; 
+    int new3_w2; 
+    int new3_w3; 
+    int new3_bias; 
+
+    int new4_w1; 
+    int new4_w2; 
+    int new4_w3; 
+    int new4_bias; 
 }
 
 struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
