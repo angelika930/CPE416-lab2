@@ -262,7 +262,7 @@ If a sensor does not see the corrrect value, correct by the PDI
                 //pause motors if button was pressed
                 if (button_delay_check(300))
                 {//move to data collection
-                        break;
+                    break;
                 }
 
                 // sensor values 
@@ -310,14 +310,11 @@ void delay(u16 loop)
         }
 }
 
-void training_mode(int interations)
-{//train neural network
-
-}
 
 int get_training_itertions()
 {
-    //recieve user input by tiling 
+    //receive user input by tiling 
+    clear_screen();
     lcd_cursor(0, 0);
     print_string("<=-  +=>");
     int iterations = 0;
@@ -346,7 +343,6 @@ int get_training_itertions()
                 iterations = 0;
         }
 
-        //print 416
         lcd_cursor(0, 1);
         print_num(iterations);
         print_string("       ");
@@ -427,6 +423,8 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     int new4_bias = -1;
 
 
+
+    //update
     network[0].w1 = new0_w1;
     network[0].w2 = new0_w2;
     network[0].bias = new0_bias;
@@ -447,7 +445,7 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     network[4].w1 = new4_w1;
     network[4].w2 = new4_w2;    
     network[4].w2 = new4_w3;
-    network[4].bias = new2_bias;
+    network[4].bias = new4_bias;
 
 }
     //sigmoid calculation
@@ -481,58 +479,112 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
     return computed_nodes;
 }
 
+void run_motors(struct motor_command out) 
+{
+    lcd_cursor(0, 0);
+    print_string("L");
+    print_num(denormalize(out.left));
+    print_string("     ");
+    lcd_cursor(0, 1);
+    print_string("R");
+    print_num(denormalize(out.right));
+    print_string("     ");
+
+    motor(0, denormalize(out.left));
+    motor(1, denormalize(out.right));
+
+}
+
+
+enum state
+{
+INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE
+};
+
 int main(void) 
 {
-   init();  //initialize board hardware
-   motor(0, 0);
-   motor(1, 0);
-   
-   //proportional
-   line_seeking_PID();
+    enum state current_state = INIT_STATE;
+    int epochs = 0;
 
-    //data collection
-    motor(0, 0);
-    motor(1, 0);
-    data_collection();
-    network_init();
-
-    //get training iterations
-    int epochs = get_training_itertions();
-    network_init();
-
-
-    while(1)
+   while(1)
+   {
+    switch(current_state)
     {
-
-        for (int i = 0; i < epochs; i++) 
+        case INIT_STATE:
         {
-            for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
-            {
-            struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
-            struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
-
-
-            train_neural_network(target, out, sensor_val[j].left, sensor_val[j].right);
-
-            }
-            clear_screen();
-            print_string("Epoch");
-            print_num(j);
-            
+            init();  //initialize board hardware
+            network_init();
+            motor(LEFT_MOTOR, 0);
+            motor(RIGHT_MOTOR, 0);
+            current_state = PID_STATE;
         }
+        break;
 
-        //
+        case PID_STATE:
+        {
+            line_seeking_PID();
+            _delay_ms(30);  //delay for debouncing
+            current_state = DATA_STATE;
+        }
+        break;
 
-        
+        case DATA_STATE:
+        {   //collecting data
+            motor(LEFT_MOTOR, 0);
+            motor(RIGHT_MOTOR, 0);
+            data_collection();
+            current_state = INPUT_STATE;
+        }
+        break;
+
+        case INPUT_STATE:
+        {
+            motor(LEFT_MOTOR, 0);
+            motor(RIGHT_MOTOR, 0);
+            epochs = get_training_itertions();
+            current_state = TRAIN_STATE;
+            _delay_ms(30);  //delay for debouncing
+        }
+        break;
+
+        case TRAIN_STATE:
+        {
+            clear_screen();
+            lcd_cursor(0,0);
+            print_string("Epoch: ");
+            for (int i = 0; i < epochs; i++) 
+            {
+                for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
+                {
+                    struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
+                    struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
+                    train_neural_network(target, out, sensor_val[j].left, sensor_val[j].right);
+                }
+                delay(10);
+                lcd_cursor(0,1);
+                print_num(i);
+                print_string("   ");
+            }
+            current_state = FORWARD_STATE;
+        }
+        delay(50);
+        clear_screen();
+        break;
+
+        case FORWARD_STATE:
+        {
+            struct motor_command current = compute_neural_network(analog(LEFT_EYE), analog(RIGHT_EYE));
+            run_motors(current);
             
-
+            if (button_delay_check(30))
+            {
+                delay(50);
+                current_state = INPUT_STATE;
+            }        
+        }
+        break;
     }
-
-
-
-
-
-//neural network
+   }
 
 return 0;
 }
