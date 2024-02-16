@@ -31,6 +31,20 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define MOTOR_STABLE 127        //motors do not move at 127
 #define LEARN_RATE .145
 
+
+/*
+
+
+- how to calculate biases
+- are we doing this right
+- double check out output layer
+- bias - 1 in hidden
+- data collection
+- what to pass into train neural network
+
+*/
+
+
 struct motor_command 
 {
         uint8_t left;
@@ -225,7 +239,7 @@ If a sensor does not see the corrrect value,  correct by the PDI
 void train_neural_network(uint8_t curr_left, uint8_t curr_right) 
 {
     //represents partial derivate of E total
-    float Etotal = 2 * 0.5 * (measured - theoretical)-1;
+    //float Etotal = 2 * 0.5 * (out - target)-1;
     
     //partial derivative of weight
     //float der_weight    how do i find a partial derivative of a number???
@@ -351,31 +365,57 @@ int get_training_itertions()
 
 }
 
-void update_output_weights(int left_error, int right_error)
+    double h1_out ;
+    double h2_out ;
+    double h3_out ;
+    double o1_out ;
+    double o2_out ;
+
+void update_weights(struct motor_command target, struct motor_command out, int sensor_left, int sensor_right)
 {
-    int total_error = left_error + right_error;
-    int new0_w1 = network[0].w1 - LEARN_RATE* ; 
-    int new0_w2; 
+    int target_value = target.right + target.left;
+    int out_value = out.right + out.left;
+    
+
+    //----hidden----------------------
+    int new0_w1 = network[0].w1 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* sensor_left);
+    int new0_w2 = network[0].w2 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* sensor_right);
+
     int new0_bias; 
 
-    int new1_w1; 
-    int new1_w2; 
+    int new1_w1 = network[1].w1 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* sensor_left);
+    int new1_w2 = network[1].w2 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* sensor_right);
     int new1_bias; 
 
-    int new2_w1; 
-    int new2_w2; 
+    int new2_w1 = network[2].w1 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* sensor_left);
+    int new2_w2 = network[2].w2 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* sensor_right);
     int new2_bias; 
 
-    int new3_w1; 
-    int new3_w2; 
-    int new3_w3; 
-    int new3_bias; 
+    //----output----------------------
+    int new3_w1 =  network[3].w1 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h1_out - 1));
+    int new3_w2  =  network[3].w2 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out) - 1);
+    int new3_w3 =  network[3].w3 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h3_out) - 1);
+    int new3_bias = -1;
 
-    int new4_w1; 
-    int new4_w2; 
-    int new4_w3; 
-    int new4_bias; 
+    int new4_w1 =  network[4].w1 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h1_out - 1));
+    int new4_w2 = network[4].w2 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h2_out- 1));
+    int new4_w3 =  network[4].w3 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h3_out- 1));
+    int new4_bias = -1;
 }
+    //sigmoid calculation
+
 
 struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
 {
@@ -385,18 +425,22 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
     double h3_net = (curr_left * network[2].w1 + curr_right * network[2].w2) - network[2].bias;
 
     //sigmoid calculation
-    double sigmoid1 = 1/(1 + exp(-(h1_net)));
-    double sigmoid2 = 1/(1 + exp(-(h2_net)));
-    double sigmoid3 = 1/(1 + exp(-(h3_net)));
+     h1_out = 1/(1 + exp(-(h1_net)));
+     h2_out = 1/(1 + exp(-(h2_net)));
+     h3_out = 1/(1 + exp(-(h3_net)));
 
     //outer layer equation
-    double o1_net = (sigmoid1 * network[3].w1 + sigmoid2 * network[3].w2 + sigmoid3 * network[3].w3) - network[3].bias;
-    double o2_net = (sigmoid1 * network[4].w1 + sigmoid2 * network[4].w2 + sigmoid3 * network[4].w3) - network[4].bias;
+    double o1_net = (h1_out * network[3].w1 + h2_out * network[3].w2 + h3_out * network[3].w3) - network[3].bias;
+    double o2_net = (h1_out * network[4].w1 + h2_out * network[4].w2 + h3_out * network[4].w3) - network[4].bias;
+
+    //sigmoid calculation
+     o1_out = 1/(1 + exp(-(o1_net)));
+     o2_out = 1/(1 + exp(-(o2_net)));
 
     //outputs predicted motor values
     struct motor_command computed_nodes;
-    computed_nodes.left = o1_net;
-    computed_nodes.right = o2_net;
+    computed_nodes.left = o1_out;
+    computed_nodes.right = o2_out;
 
     return computed_nodes;
 }
@@ -427,10 +471,7 @@ int main(void)
         struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
         struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
 
-        int error_left = target.left - out.left;
-        int error_right = target.right - out.right;
-
-        update_weights(error_left, error_right);
+        update_weights(target, out, sensor_val[j].left, sensor_val[j].right);
 
 
         }
