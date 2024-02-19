@@ -29,7 +29,7 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define NUM_OF_ERROR_SAMPLES 5
 #define NUM_OF_COLLECTED_SAMPLES 50
 #define MOTOR_STABLE 127        //motors do not move at 127
-#define LEARN_RATE .145
+#define LEARN_RATE .10
 
 
 /*
@@ -373,8 +373,6 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
     * (h1_out * (1-h1_out)) * -1);
 
-
-
     double new1_w1 = network[1].w1 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
@@ -405,7 +403,6 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     //----output----------------------
     double new3_w1 =  network[3].w1 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h1_out));
-
     double new3_w2  =  network[3].w2 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out));
     double new3_w3 =  network[3].w3 - LEARN_RATE * 
@@ -480,8 +477,6 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
 
 void run_motors(struct motor_command out) 
 {
-
-
     lcd_cursor(0, 0);
     print_string("L is ");
     print_num(denormalize(out.left));
@@ -493,7 +488,6 @@ void run_motors(struct motor_command out)
 
     motor(0, denormalize(out.left));
     motor(1, denormalize(out.right));
-
 }
 
 
@@ -525,7 +519,7 @@ int main(void)
         case PID_STATE:
         {
             line_seeking_PID();
-            _delay_ms(70);  //delay for debouncing
+            _delay_ms(150);  //delay for debouncing
             current_state = DATA_STATE;
         }
         break;
@@ -555,7 +549,7 @@ int main(void)
         {
             clear_screen();
             lcd_cursor(0,0);
-            //print_string("Epoch: ");
+            print_string("Training: ");
             for (int i = 0; i < epochs; i++) 
             {
                 for (int j = 0; j < 1; j++) 
@@ -564,13 +558,11 @@ int main(void)
                     struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
                     train_neural_network(target, out, sensor_val[j].left, sensor_val[j].right);
 
-                    delay(2000);
-
                 }
-                //delay(10);
-                //lcd_cursor(0,1);
-                //print_num(i);
-                //print_string("   ");
+                delay(10);
+                lcd_cursor(0,1);
+                print_num(i);
+                print_string("   ");
             }
             current_state = FORWARD_STATE;
         }
