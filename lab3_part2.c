@@ -47,8 +47,8 @@ The robot will follow 3 tracks, a circle, square and an oval.
 
 struct motor_command 
 {
-        uint8_t left;
-        uint8_t right;
+        double left;
+        double right;
 } motor_command;
 
 struct pure_data 
@@ -67,13 +67,13 @@ struct neural_node {
     double bias;
 } neural_node;
 
-struct neural_node network[5];
+struct neural_node network[5] = {0};
 
-    double h1_out ;
-    double h2_out ;
-    double h3_out ;
-    double o1_out ;
-    double o2_out ;
+    double h1_out = 0;
+    double h2_out = 0;
+    double h3_out = 0;
+    double o1_out = 0;
+    double o2_out = 0;
 
 void motor(uint8_t num, int8_t speed)
 { //num will be 0 or 1 corresponding to the left or right motor
@@ -129,14 +129,14 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
-uint8_t normalize(uint8_t value) 
+double normalize(uint8_t value) 
 {
-    return (value * 100) / 255;
+    return (value / 100);
 }
 
-uint8_t denormalize(uint8_t value) 
+uint8_t denormalize(double value) 
 {
-        return (value * 255) / 100;
+        return (value * 100);
 }
 
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
@@ -169,33 +169,34 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 void network_init()
 {
     //randomize weights on initialization
-    network[0].w1 = rand()/ RAND_MAX;
-    network[0].w2 = rand()/ RAND_MAX;
-    network[0].bias = rand()/ RAND_MAX;
+    network[0].w1 =(double) rand()/ RAND_MAX;
+    network[0].w2 = (double)rand()/ RAND_MAX;
+    network[0].bias = (double)rand()/ RAND_MAX;
 
-    network[1].w1 = rand()/ RAND_MAX;
-    network[1].w2 = rand()/ RAND_MAX;
-    network[1].bias = rand()/ RAND_MAX;
+    network[1].w1 =(double) rand()/ RAND_MAX;
+    network[1].w2 = (double)rand()/ RAND_MAX;
+    network[1].bias = (double)rand()/ RAND_MAX;
 
-    network[2].w1 = rand()/ RAND_MAX;
-    network[2].w2 = rand()/ RAND_MAX;
-    network[2].bias = rand()/ RAND_MAX;
+    network[2].w1 = (double)rand()/ RAND_MAX;
+    network[2].w2 = (double)rand()/ RAND_MAX;
+    network[2].bias = (double)rand()/ RAND_MAX;
 
 
     //output layer weights
-    network[3].w1 = rand()/ RAND_MAX;
-    network[3].w2 = rand()/ RAND_MAX;
-    network[3].w3 = rand()/ RAND_MAX;
-    network[3].bias = rand()/ RAND_MAX;
+    network[3].w1 = (double)rand()/ RAND_MAX;
+    network[3].w2 = (double)rand()/ RAND_MAX;
+    network[3].w3 = (double)rand()/ RAND_MAX;
+    network[3].bias = (double)rand()/ RAND_MAX;
 
-    network[4].w1 = rand()/ RAND_MAX;
-    network[4].w2 = rand()/ RAND_MAX;
-    network[4].w3 = rand()/ RAND_MAX;
-    network[4].bias = rand()/ RAND_MAX;
+    network[4].w1 = (double)rand()/ RAND_MAX;
+    network[4].w2 = (double)rand()/ RAND_MAX;
+    network[4].w3 = (double)rand()/ RAND_MAX;
+    network[4].bias = (double)rand()/ RAND_MAX;
+
 
 }
 
-void data_collection()
+int data_collection()
 {/*
 Measure the outside of the lines
 If both sensors see the same value, assume they are on the correct side of the line
@@ -231,12 +232,13 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
                 if (button_delay_check(300))
                 {//move to training
-                        break;
+                        return sample_count;
                 }
         }
         clear_screen();
         lcd_cursor(0, 0);
         print_string("victory!");
+    return sample_count;
 
 }
 
@@ -273,8 +275,8 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 derivative = calculate_average_error(analog_samples);
 
                 //PID equation
-		leftMotorSpeed = 30 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
-		rightMotorSpeed = 30 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
+		leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
+		rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
@@ -294,7 +296,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 prev_error = error;
     }
 }
-
 
 
 void delay(u16 loop)
@@ -359,66 +360,67 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     //recieves datapoints captured outputs update neuralnetwork
 
     //----hidden----------------------
-    int new0_w1 = network[0].w1 - LEARN_RATE * 
+    double new0_w1 = network[0].w1 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
     * (h1_out * (1-h1_out)) * sensor_left);
-    int new0_w2 = network[0].w2 - LEARN_RATE * 
+    double new0_w2 = network[0].w2 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
     * (h1_out * (1-h1_out)) * sensor_right);
-    int new0_bias = network[0].bias - LEARN_RATE * 
+    double new0_bias = network[0].bias - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
     * (h1_out * (1-h1_out)) * -1);
 
 
 
-    int new1_w1 = network[1].w1 - LEARN_RATE * 
+    double new1_w1 = network[1].w1 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
     * (h2_out * (1-h2_out)) * sensor_left);
-    int new1_w2 = network[1].w2 - LEARN_RATE * 
+    double new1_w2 = network[1].w2 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
     * (h2_out * (1-h2_out)) * sensor_right);
-    int new1_bias = network[1].bias - LEARN_RATE * 
+    double new1_bias = network[1].bias - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
     * (h2_out * (1-h2_out)) * -1);
 
 
-    int new2_w1 = network[2].w1 - LEARN_RATE * 
+    double new2_w1 = network[2].w1 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
     * (h3_out * (1-h3_out)) * sensor_left);
-    int new2_w2 = network[2].w2 - LEARN_RATE * 
+    double new2_w2 = network[2].w2 - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
     * (h3_out * (1-h3_out)) * sensor_right);
-    int new2_bias = network[2].bias - LEARN_RATE * 
+    double new2_bias = network[2].bias - LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
     * (h3_out * (1-h3_out)) * -1);
 
     //----output----------------------
-    int new3_w1 =  network[3].w1 - LEARN_RATE * 
+    double new3_w1 =  network[3].w1 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h1_out));
 
-    int new3_w2  =  network[3].w2 - LEARN_RATE * 
+    double new3_w2  =  network[3].w2 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out));
-    int new3_w3 =  network[3].w3 - LEARN_RATE * 
+    double new3_w3 =  network[3].w3 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h3_out));
-    int new3_bias = -1;
+    double new3_bias = network[3].w3 - LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (-1));
 
-    int new4_w1 =  network[4].w1 - LEARN_RATE * 
+    double new4_w1 =  network[4].w1 - LEARN_RATE * 
     ((out.right - target.right)* (out.right * (1 - out.right))* (h1_out));
-    int new4_w2 = network[4].w2 - LEARN_RATE * 
+    double new4_w2 = network[4].w2 - LEARN_RATE * 
     ((out.right - target.right)* (out.right * (1 - out.right))* (h2_out));
-    int new4_w3 =  network[4].w3 - LEARN_RATE * 
+    double new4_w3 =  network[4].w3 - LEARN_RATE * 
     ((out.right - target.right)* (out.right * (1 - out.right))* (h3_out));
-    int new4_bias = -1;
-
+    double new4_bias = network[4].w3 - LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (-1));
 
 
     //update
@@ -470,20 +472,22 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
 
     //outputs predicted motor values
     struct motor_command computed_nodes;
-    computed_nodes.left = o1_out;
-    computed_nodes.right = o2_out;
+    computed_nodes.left = (o1_out);
+    computed_nodes.right = (o2_out);
 
     return computed_nodes;
 }
 
 void run_motors(struct motor_command out) 
 {
+
+
     lcd_cursor(0, 0);
-    print_string("L");
+    print_string("L is ");
     print_num(denormalize(out.left));
     print_string("     ");
     lcd_cursor(0, 1);
-    print_string("R");
+    print_string("R is ");
     print_num(denormalize(out.right));
     print_string("     ");
 
@@ -502,6 +506,7 @@ int main(void)
 {
     enum state current_state = INIT_STATE;
     int epochs = 0;
+    int data_collected = 0;
 
    while(1)
    {
@@ -520,7 +525,7 @@ int main(void)
         case PID_STATE:
         {
             line_seeking_PID();
-            _delay_ms(30);  //delay for debouncing
+            _delay_ms(70);  //delay for debouncing
             current_state = DATA_STATE;
         }
         break;
@@ -529,7 +534,9 @@ int main(void)
         {   //collecting data
             motor(LEFT_MOTOR, 0);
             motor(RIGHT_MOTOR, 0);
-            data_collection();
+            data_collected = data_collection();
+            _delay_ms(70);  //delay for debouncing
+
             current_state = INPUT_STATE;
         }
         break;
@@ -540,7 +547,7 @@ int main(void)
             motor(RIGHT_MOTOR, 0);
             epochs = get_training_itertions();
             current_state = TRAIN_STATE;
-            _delay_ms(30);  //delay for debouncing
+            _delay_ms(70);  //delay for debouncing
         }
         break;
 
@@ -548,28 +555,32 @@ int main(void)
         {
             clear_screen();
             lcd_cursor(0,0);
-            print_string("Epoch: ");
+            //print_string("Epoch: ");
             for (int i = 0; i < epochs; i++) 
             {
-                for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
+                for (int j = 0; j < 1; j++) 
                 {
                     struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
                     struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
                     train_neural_network(target, out, sensor_val[j].left, sensor_val[j].right);
+
+                    delay(2000);
+
                 }
-                delay(10);
-                lcd_cursor(0,1);
-                print_num(i);
-                print_string("   ");
+                //delay(10);
+                //lcd_cursor(0,1);
+                //print_num(i);
+                //print_string("   ");
             }
             current_state = FORWARD_STATE;
         }
-        delay(50);
-        clear_screen();
+
         break;
 
         case FORWARD_STATE:
         {
+
+            print_string("hello");
             struct motor_command current = compute_neural_network(analog(LEFT_EYE), analog(RIGHT_EYE));
             run_motors(current);
             
@@ -577,7 +588,12 @@ int main(void)
             {
                 delay(50);
                 current_state = INPUT_STATE;
-            }        
+            } 
+            else
+            {
+                current_state = FORWARD_STATE;
+
+            }  
         }
         break;
     }
