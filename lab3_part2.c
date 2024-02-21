@@ -34,7 +34,6 @@ The robot will follow 3 tracks, a circle, square and an oval.
 
 /*
 
-
 - how to calculate biases
 - are we doing this right
 - double check out output layer
@@ -129,14 +128,29 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
+
 double normalize(uint8_t value) 
 {
-    return (value / 100);
+    double result = (value / 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 1.0) {
+        return 1.0;
+    } else {
+        return result;
+    }
 }
 
-uint8_t denormalize(double value) 
+double denormalize(double value) 
 {
-        return (value * 100);
+    double result = (value * 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 100.0) {
+        return 100.0;
+    } else {
+        return result;
+    }
 }
 
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
