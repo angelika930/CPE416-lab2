@@ -56,7 +56,7 @@ struct pure_data
     uint8_t right;
 } pure_data;
 
-struct pure_data sensor_val[50];
+struct pure_data sensor_val[NUM_OF_COLLECTED_SAMPLES];
 int sample_count = 0;
 
 struct neural_node {
@@ -91,6 +91,25 @@ void motor(uint8_t num, int8_t speed)
                 set_servo(LEFT_MOTOR, adjusted_speed); 
         }
 }
+
+int button_debounce()
+{
+    int button = 0;
+    if (get_btn()== 1)
+    {
+        button = 1;
+        _delay_ms(10);
+        while (get_btn()==1)
+        {
+            if (get_btn() == 0)
+            {
+                return button;
+            }
+        }
+    }
+    return button;
+}
+
 
 u16 button_delay_check(u16 loop)
 {
@@ -170,6 +189,15 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         int leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
         int rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
 
+        if (leftMotorSpeed < 0)
+        {
+            leftMotorSpeed = 0;
+        }
+        if (rightMotorSpeed < 0)
+        {
+            rightMotorSpeed = 0;
+        }
+
         //set the motors
         curr_motor_command.left = normalize(leftMotorSpeed);
         curr_motor_command.right = normalize(rightMotorSpeed);
@@ -244,10 +272,12 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 print_string("R");
                 print_num(curr_right);  
 
-                if (button_delay_check(300))
+                if (button_debounce())
                 {//move to training
+                        _delay_ms(50);
                         return sample_count;
                 }
+                _delay_ms(100);
         }
         clear_screen();
         lcd_cursor(0, 0);
@@ -274,7 +304,7 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
         while (true) 
         {
-                if (get_btn())
+                if (button_debounce())
                 {
                     break;
                 }
@@ -291,6 +321,17 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 //PID equation
 		leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
 		rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
+
+
+        if (leftMotorSpeed < 0)
+        {
+            leftMotorSpeed = 0;
+        }
+        if (rightMotorSpeed < 0)
+        {
+            rightMotorSpeed = 0;
+        }
+
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
@@ -421,7 +462,7 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out));
     double new3_w3 =  network[3].w3 - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (h3_out));
-    double new3_bias = network[3].w3 - LEARN_RATE * 
+    double new3_bias = network[3].bias - LEARN_RATE * 
     ((out.left - target.left)* (out.left * (1 - out.left))* (-1));
 
     double new4_w1 =  network[4].w1 - LEARN_RATE * 
@@ -430,7 +471,7 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     ((out.right - target.right)* (out.right * (1 - out.right))* (h2_out));
     double new4_w3 =  network[4].w3 - LEARN_RATE * 
     ((out.right - target.right)* (out.right * (1 - out.right))* (h3_out));
-    double new4_bias = network[4].w3 - LEARN_RATE * 
+    double new4_bias = network[4].bias - LEARN_RATE * 
     ((out.right - target.right)* (out.right * (1 - out.right))* (-1));
 
 
@@ -490,18 +531,21 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
 }
 
 void run_motors(struct motor_command out) 
-{
-    lcd_cursor(0, 0);
-    print_string("L is ");
-    print_num(denormalize(out.left));
-    print_string("     ");
-    lcd_cursor(0, 1);
-    print_string("R is ");
-    print_num(denormalize(out.right));
-    print_string("     ");
+{   
+    int left = denormalize(out.left);
+    int right = denormalize(out.right);
 
-    motor(0, denormalize(out.left));
-    motor(1, denormalize(out.right));
+lcd_cursor(0, 1);
+print_string("L");
+print_num(left);
+print_string("   ");
+lcd_cursor(4, 1);
+print_string("R");
+print_num(right);
+print_string("  ");
+
+    motor(LEFT_MOTOR, left);
+    motor(RIGHT_MOTOR, right);
 }
 
 
@@ -509,6 +553,9 @@ enum state
 {
 INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE
 };
+
+
+
 
 int main(void) 
 {
@@ -533,17 +580,17 @@ int main(void)
         case PID_STATE:
         {
             line_seeking_PID();
-            _delay_ms(150);  //delay for debouncing
             current_state = DATA_STATE;
         }
         break;
 
         case DATA_STATE:
         {   //collecting data
+            _delay_ms(500); 
             motor(LEFT_MOTOR, 0);
             motor(RIGHT_MOTOR, 0);
             data_collected = data_collection();
-            _delay_ms(70);  //delay for debouncing
+            _delay_ms(500);  //delay for debouncing
 
             current_state = INPUT_STATE;
         }
@@ -579,6 +626,7 @@ int main(void)
                 print_string("   ");
             }
             current_state = FORWARD_STATE;
+            clear_screen();
         }
 
         break;
@@ -586,10 +634,15 @@ int main(void)
         case FORWARD_STATE:
         {
 
-            print_string("hello");
-            struct motor_command current = compute_neural_network(analog(LEFT_EYE), analog(RIGHT_EYE));
+            int left = analog(LEFT_EYE);
+            int right = analog(RIGHT_EYE);
+            
+            struct motor_command current = compute_neural_network(left, right);
             run_motors(current);
             
+
+
+
             if (get_btn()==1)
             {
                 delay(50);
