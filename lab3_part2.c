@@ -23,17 +23,16 @@ The robot will follow 3 tracks, a circle, square and an oval.
 
 #define IS_BETWEEN(x, a, b) ((x) >= (a) && (x) <= (b))
 #define K_P 0.2
-#define K_D 0.1
+#define K_D 0.001
 #define K_I 0.05
 #define DEFAULT_SPEED 20
 #define NUM_OF_ERROR_SAMPLES 5
 #define NUM_OF_COLLECTED_SAMPLES 50
 #define MOTOR_STABLE 127        //motors do not move at 127
-#define LEARN_RATE .10
+#define LEARN_RATE .037
 
 
 /*
-
 
 - how to calculate biases
 - are we doing this right
@@ -129,14 +128,29 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
+
 double normalize(uint8_t value) 
 {
-    return (value / 100);
+    double result = (value / 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 1.0) {
+        return 1.0;
+    } else {
+        return result;
+    }
 }
 
-uint8_t denormalize(double value) 
+double denormalize(double value) 
 {
-        return (value * 100);
+    double result = (value * 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 100.0) {
+        return 100.0;
+    } else {
+        return result;
+    }
 }
 
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
@@ -576,7 +590,7 @@ int main(void)
             struct motor_command current = compute_neural_network(analog(LEFT_EYE), analog(RIGHT_EYE));
             run_motors(current);
             
-            if (button_delay_check(30))
+            if (get_btn()==1)
             {
                 delay(50);
                 current_state = INPUT_STATE;
@@ -593,4 +607,3 @@ int main(void)
 
 return 0;
 }
-
