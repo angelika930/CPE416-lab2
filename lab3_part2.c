@@ -1,8 +1,8 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 4
+//Lab 3 part 2
 //Description: 
 
-The program that implements a line following robot. 
+The program that implements a line following robot using a neural network based off of a pid model. 
 The robot will follow 3 tracks, a circle, square and an oval.
 */
 
@@ -30,17 +30,6 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define NUM_OF_COLLECTED_SAMPLES 100
 #define MOTOR_STABLE 127        //motors do not move at 127
 #define LEARN_RATE .137
-
-/*
-
-- how to calculate biases
-- are we doing this right
-- double check out output layer
-- bias - 1 in hidden
-- data collection
-- what to pass into train neural network
-
-*/
 
 
 struct motor_command 
@@ -91,6 +80,7 @@ void motor(uint8_t num, int8_t speed)
         }
 }
 
+//prevents button debouncing
 int button_debounce()
 {
     int button = 0;
@@ -101,10 +91,9 @@ int button_debounce()
     return button;
 }
 
-
+//acts as a delay_ms function that also checks for a button press
 u16 button_delay_check(u16 loop)
 {
-    //acts as a delay_ms function that also checks for a button press
 
         u16 count = 0;
         int button_flag = 0;
@@ -138,7 +127,7 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
-
+//Changes a value to be between 0-1
 double normalize(uint8_t value) 
 {
     double result = (value / 100.0);
@@ -151,6 +140,7 @@ double normalize(uint8_t value)
     }
 }
 
+//changes a value to be between 0-100
 double denormalize(double value) 
 {
     double result = (value * 100.0);
@@ -163,6 +153,7 @@ double denormalize(double value)
     }
 }
 
+//takes in left and right sensor values and outputs computed motor values by pid model
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
         struct motor_command curr_motor_command =  {0};
@@ -199,9 +190,10 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 
 }
 
+//randomize weights on initialization
 void network_init()
 {
-    //randomize weights on initialization
+    
     network[0].w1 =(double) rand()/ RAND_MAX;
     network[0].w2 = (double)rand()/ RAND_MAX;
     network[0].bias = (double)rand()/ RAND_MAX;
@@ -323,21 +315,10 @@ If a sensor does not see the corrrect value,  correct by the PDI
     }
 }
 
-
-void delay(u16 loop)
-{
-        u16 count = 0;
-        while (count < loop)
-        {
-                _delay_ms(1);
-                count ++;
-        }
-}
-
-
+//receive user input by tilting
 int get_training_itertions()
 {
-    //receive user input by tiling 
+     
     clear_screen();
     lcd_cursor(0, 0);
     print_string("<=-  +=>");
@@ -380,10 +361,10 @@ int get_training_itertions()
 
 }
 
-
+//receives datapoints captured outputs update neural network
 void train_neural_network(struct motor_command target, struct motor_command out, int sensor_left, int sensor_right)
 {
-    //receives datapoints captured outputs update neural network
+    
 
     double db_right = normalize(sensor_right);
     double db_left = normalize(sensor_left);
@@ -473,9 +454,8 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     network[4].bias = new4_bias;
 
 }
-    //sigmoid calculation
 
-
+//takes in left and right sensor values and outputs computed motor values by neural network
 struct motor_command compute_neural_network(uint8_t sensor_left, uint8_t sensor_right) 
 {
     double curr_left = normalize(sensor_left);
