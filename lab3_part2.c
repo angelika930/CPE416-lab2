@@ -80,7 +80,7 @@ void motor(uint8_t num, int8_t speed)
                 set_servo(LEFT_MOTOR, adjusted_speed); 
         }
 }
-
+//prevents button debouncing
 int button_debounce()
 {
     int button = 0;
@@ -91,7 +91,7 @@ int button_debounce()
     return button;
 }
 
-
+//acts as a delay_ms function that also checks for a button press
 u16 button_delay_check(u16 loop)
 {
     //acts as a delay_ms function that also checks for a button press
@@ -130,7 +130,7 @@ float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES])
    return (float)sum / NUM_OF_ERROR_SAMPLES;
 }
 
-
+//Changes a value to be between 0-1
 double normalize(uint8_t value) 
 {
     double result = (value / 100.0);
@@ -142,7 +142,7 @@ double normalize(uint8_t value)
         return result;
     }
 }
-
+//changes a value to be between 0-100
 double denormalize(double value) 
 {
     double result = (value * 100.0);
@@ -154,7 +154,7 @@ double denormalize(double value)
         return result;
     }
 }
-
+//takes in left and right sensor values and outputs computed motor values by pid model
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
         struct motor_command curr_motor_command =  {0};
@@ -190,10 +190,9 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         return curr_motor_command;
 
 }
-
+//randomize weights on initialization
 void network_init()
 {
-    //randomize weights on initialization
     network[0].w1 =(double) rand()/ RAND_MAX;
     network[0].w2 = (double)rand()/ RAND_MAX;
     network[0].bias = (double)rand()/ RAND_MAX;
@@ -327,7 +326,7 @@ void delay(u16 loop)
 
 int get_training_itertions()
 {
-    //receive user input by tiling 
+    //receive user input by tilting 
     clear_screen();
     lcd_cursor(0, 0);
     print_string("<=-  +=>");
