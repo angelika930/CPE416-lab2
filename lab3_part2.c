@@ -31,7 +31,6 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define MOTOR_STABLE 127        //motors do not move at 127
 #define LEARN_RATE .037
 
-
 /*
 
 - how to calculate biases
@@ -286,7 +285,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
 
 }
 
-
 void line_seeking_PID()
 {/*
 Measure the outside of the lines
@@ -312,26 +310,23 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 curr_left = (analog(LEFT_EYE));
                 curr_right = (analog(RIGHT_EYE));
 
-
                 //find derivative
                 error = curr_left - curr_right;
                 add_to_error_array(error, analog_samples);
                 derivative = calculate_average_error(analog_samples);
 
                 //PID equation
-		leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
-		rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
+                leftMotorSpeed = 45 + K_P * error + K_I * (error + prev_error) + K_D * derivative;	
+                rightMotorSpeed = 45 - K_P * error - K_I * (error + prev_error) - K_D * derivative;	
 
-
-        if (leftMotorSpeed < 0)
-        {
-            leftMotorSpeed = 0;
-        }
-        if (rightMotorSpeed < 0)
-        {
-            rightMotorSpeed = 0;
-        }
-
+                if (leftMotorSpeed < 0)
+                {
+                    leftMotorSpeed = 0;
+                }
+                if (rightMotorSpeed < 0)
+                {
+                    rightMotorSpeed = 0;
+                }
 
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
@@ -410,69 +405,73 @@ int get_training_itertions()
 }
 
 
+
 void train_neural_network(struct motor_command target, struct motor_command out, int sensor_left, int sensor_right)
 {
-    //recieves datapoints captured outputs update neuralnetwork
+    //receives datapoints captured outputs update neural network
+
+    double db_right = normalize(sensor_right);
+    double db_left = normalize(sensor_left);
 
     //----hidden----------------------
-    double new0_w1 = network[0].w1 - LEARN_RATE * 
+    double new0_w1 = network[0].w1 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
-    * (h1_out * (1-h1_out)) * sensor_left);
-    double new0_w2 = network[0].w2 - LEARN_RATE * 
+    * (h1_out * (1-h1_out)) * db_left));
+    
+    double new0_w2 = network[0].w2 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
-    * (h1_out * (1-h1_out)) * sensor_right);
-    double new0_bias = network[0].bias - LEARN_RATE * 
+    * (h1_out * (1-h1_out)) * db_right));
+    double new0_bias = network[0].bias - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w1)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w1))
-    * (h1_out * (1-h1_out)) * -1);
+    * (h1_out * (1-h1_out)) * -1));
 
-    double new1_w1 = network[1].w1 - LEARN_RATE * 
+    double new1_w1 = network[1].w1 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
-    * (h2_out * (1-h2_out)) * sensor_left);
-    double new1_w2 = network[1].w2 - LEARN_RATE * 
+    * (h2_out * (1-h2_out)) * db_left));
+    double new1_w2 = network[1].w2 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
-    * (h2_out * (1-h2_out)) * sensor_right);
-    double new1_bias = network[1].bias - LEARN_RATE * 
+    * (h2_out * (1-h2_out)) * db_right));
+    double new1_bias = network[1].bias - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w2)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w2))
-    * (h2_out * (1-h2_out)) * -1);
+    * (h2_out * (1-h2_out)) * -1));
 
-
-    double new2_w1 = network[2].w1 - LEARN_RATE * 
+    double new2_w1 = network[2].w1 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
-    * (h3_out * (1-h3_out)) * sensor_left);
-    double new2_w2 = network[2].w2 - LEARN_RATE * 
+    * (h3_out * (1-h3_out)) * db_left));
+    double new2_w2 = network[2].w2 - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
-    * (h3_out * (1-h3_out)) * sensor_right);
-    double new2_bias = network[2].bias - LEARN_RATE * 
+    * (h3_out * (1-h3_out)) * db_right));
+    double new2_bias = network[2].bias - (LEARN_RATE * 
     ((((out.left - target.left)* (out.left * (1 - out.left))* network[3].w3)
     + ((out.right - target.right)* (out.right * (1 - out.right))* network[4].w3))
-    * (h3_out * (1-h3_out)) * -1);
+    * (h3_out * (1-h3_out)) * -1));
 
     //----output----------------------
-    double new3_w1 =  network[3].w1 - LEARN_RATE * 
-    ((out.left - target.left)* (out.left * (1 - out.left))* (h1_out));
-    double new3_w2  =  network[3].w2 - LEARN_RATE * 
-    ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out));
-    double new3_w3 =  network[3].w3 - LEARN_RATE * 
-    ((out.left - target.left)* (out.left * (1 - out.left))* (h3_out));
-    double new3_bias = network[3].bias - LEARN_RATE * 
-    ((out.left - target.left)* (out.left * (1 - out.left))* (-1));
+    double new3_w1 =  network[3].w1 - (LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h1_out)));
+    double new3_w2  =  network[3].w2 - (LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h2_out)));
+    double new3_w3 =  network[3].w3 - (LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (h3_out)));
+    double new3_bias = network[3].bias - (LEARN_RATE * 
+    ((out.left - target.left)* (out.left * (1 - out.left))* (-1)));
 
-    double new4_w1 =  network[4].w1 - LEARN_RATE * 
-    ((out.right - target.right)* (out.right * (1 - out.right))* (h1_out));
-    double new4_w2 = network[4].w2 - LEARN_RATE * 
-    ((out.right - target.right)* (out.right * (1 - out.right))* (h2_out));
-    double new4_w3 =  network[4].w3 - LEARN_RATE * 
-    ((out.right - target.right)* (out.right * (1 - out.right))* (h3_out));
-    double new4_bias = network[4].bias - LEARN_RATE * 
-    ((out.right - target.right)* (out.right * (1 - out.right))* (-1));
+    double new4_w1 =  network[4].w1 - (LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h1_out)));
+    double new4_w2 = network[4].w2 - (LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h2_out)));
+    double new4_w3 =  network[4].w3 - (LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (h3_out)));
+    double new4_bias = network[4].bias - (LEARN_RATE * 
+    ((out.right - target.right)* (out.right * (1 - out.right))* (-1)));
 
 
     //update
@@ -502,12 +501,15 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     //sigmoid calculation
 
 
-struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_right) 
+struct motor_command compute_neural_network(uint8_t sensor_left, uint8_t sensor_right) 
 {
+    double curr_left = normalize(sensor_left);
+    double curr_right = normalize(sensor_right);
+
     //calculate net value
-    double h1_net = (curr_left * network[0].w1 + curr_right * network[0].w2) - network[0].bias;
-    double h2_net = (curr_left * network[1].w1 + curr_right * network[1].w2) - network[1].bias;
-    double h3_net = (curr_left * network[2].w1 + curr_right * network[2].w2) - network[2].bias;
+    double h1_net = ((curr_left * network[0].w1) + (curr_right * network[0].w2)) - network[0].bias;
+    double h2_net = ((curr_left * network[1].w1) + (curr_right * network[1].w2)) - network[1].bias;
+    double h3_net = ((curr_left * network[2].w1) + (curr_right * network[2].w2)) - network[2].bias;
 
     //sigmoid calculation
      h1_out = 1/(1 + exp(-(h1_net)));
@@ -515,17 +517,18 @@ struct motor_command compute_neural_network(uint8_t curr_left, uint8_t curr_righ
      h3_out = 1/(1 + exp(-(h3_net)));
 
     //outer layer equation
-    double o1_net = (h1_out * network[3].w1 + h2_out * network[3].w2 + h3_out * network[3].w3) - network[3].bias;
-    double o2_net = (h1_out * network[4].w1 + h2_out * network[4].w2 + h3_out * network[4].w3) - network[4].bias;
+    double o1_net = ((h1_out * network[3].w1) + (h2_out * network[3].w2) + (h3_out * network[3].w3)) - network[3].bias;
+    double o2_net = ((h1_out * network[4].w1) + (h2_out * network[4].w2) + (h3_out * network[4].w3)) - network[4].bias;
 
     //sigmoid calculation
-     o1_out = 1/(1 + exp(-(o1_net)));
-     o2_out = 1/(1 + exp(-(o2_net)));
+     o1_out = (1/(1 + exp(-(o1_net))));
+     o2_out = (1/(1 + exp(-(o2_net))));
 
     //outputs predicted motor values
     struct motor_command computed_nodes;
-    computed_nodes.left = (o1_out);
-    computed_nodes.right = (o2_out);
+    computed_nodes.left = o1_out;
+    computed_nodes.right = o2_out;
+
 
     return computed_nodes;
 }
