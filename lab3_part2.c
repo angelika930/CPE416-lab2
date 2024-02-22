@@ -27,9 +27,9 @@ The robot will follow 3 tracks, a circle, square and an oval.
 #define K_I 0.05
 #define DEFAULT_SPEED 20
 #define NUM_OF_ERROR_SAMPLES 5
-#define NUM_OF_COLLECTED_SAMPLES 50
+#define NUM_OF_COLLECTED_SAMPLES 100
 #define MOTOR_STABLE 127        //motors do not move at 127
-#define LEARN_RATE .037
+#define LEARN_RATE .137
 
 /*
 
@@ -94,17 +94,9 @@ void motor(uint8_t num, int8_t speed)
 int button_debounce()
 {
     int button = 0;
-    if (get_btn()== 1)
+    while(get_btn())
     {
         button = 1;
-        _delay_ms(10);
-        while (get_btn()==1)
-        {
-            if (get_btn() == 0)
-            {
-                return button;
-            }
-        }
     }
     return button;
 }
@@ -269,14 +261,9 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 print_num(curr_left);  
                 lcd_cursor(4, 1);
                 print_string("R");
-                print_num(curr_right);  
+                print_num(curr_right);   
 
-                if (button_debounce())
-                {//move to training
-                        _delay_ms(50);
-                        return sample_count;
-                }
-                _delay_ms(100);
+                _delay_ms(70);
         }
         clear_screen();
         lcd_cursor(0, 0);
@@ -331,17 +318,6 @@ If a sensor does not see the corrrect value,  correct by the PDI
                 //set the motors
                 motor(LEFT_MOTOR, leftMotorSpeed);
                 motor(RIGHT_MOTOR, rightMotorSpeed);
-
-                //print
-                clear_screen();
-                lcd_cursor(0, 0);
-                print_string("L: ");
-                print_num(leftMotorSpeed);
-                print_string("    ");
-                lcd_cursor(0, 1);
-                print_string("R: ");
-                print_num(rightMotorSpeed);  
-                print_string("    ");
 
                 prev_error = error;
     }
@@ -403,7 +379,6 @@ int get_training_itertions()
     return 0;
 
 }
-
 
 
 void train_neural_network(struct motor_command target, struct motor_command out, int sensor_left, int sensor_right)
@@ -538,14 +513,14 @@ void run_motors(struct motor_command out)
     int left = denormalize(out.left);
     int right = denormalize(out.right);
 
-lcd_cursor(0, 1);
-print_string("L");
-print_num(left);
-print_string("   ");
-lcd_cursor(4, 1);
-print_string("R");
-print_num(right);
-print_string("  ");
+    lcd_cursor(0, 1);
+    print_string("L");
+    print_num(left);
+    print_string("   ");
+    lcd_cursor(4, 1);
+    print_string("R");
+    print_num(right);
+    print_string("  ");
 
     motor(LEFT_MOTOR, left);
     motor(RIGHT_MOTOR, right);
@@ -554,7 +529,7 @@ print_string("  ");
 
 enum state
 {
-INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE
+INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE, TEST_STATE
 };
 
 
@@ -582,6 +557,11 @@ int main(void)
 
         case PID_STATE:
         {
+            lcd_cursor(0,0);
+            print_string("proporti");
+            lcd_cursor(0,1);
+            print_string("onal");
+
             line_seeking_PID();
             current_state = DATA_STATE;
         }
@@ -593,7 +573,6 @@ int main(void)
             motor(LEFT_MOTOR, 0);
             motor(RIGHT_MOTOR, 0);
             data_collected = data_collection();
-            _delay_ms(500);  //delay for debouncing
 
             current_state = INPUT_STATE;
         }
@@ -605,7 +584,6 @@ int main(void)
             motor(RIGHT_MOTOR, 0);
             epochs = get_training_itertions();
             current_state = TRAIN_STATE;
-            _delay_ms(70);  //delay for debouncing
         }
         break;
 
@@ -616,14 +594,13 @@ int main(void)
             print_string("Training: ");
             for (int i = 0; i < epochs; i++) 
             {
-                for (int j = 0; j < 1; j++) 
+                for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
                 {
                     struct motor_command target = compute_proportional(sensor_val[j].left, sensor_val[j].right);
                     struct motor_command out = compute_neural_network(sensor_val[j].left, sensor_val[j].right);
                     train_neural_network(target, out, sensor_val[j].left, sensor_val[j].right);
 
                 }
-                delay(10);
                 lcd_cursor(0,1);
                 print_num(i);
                 print_string("   ");
@@ -644,8 +621,6 @@ int main(void)
             run_motors(current);
             
 
-
-
             if (get_btn()==1)
             {
                 delay(50);
@@ -658,6 +633,27 @@ int main(void)
             }  
         }
         break;
+
+        break;
+
+        case TEST_STATE:
+        {
+
+            for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
+            {
+                lcd_cursor(0,0);
+                print_num(j);
+                print_string("   ");
+                struct motor_command current = compute_proportional(sensor_val[j].left, sensor_val[j].right);
+                _delay_ms(10);
+                run_motors(current);
+
+            }
+
+
+        }
+        break;
+
     }
    }
 
