@@ -1,9 +1,9 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 4
+//Lab 3 part 1
 //Description: 
 
-The program that implements a line following robot. 
-The robot will follow 3 tracks, a circle, square and an oval.
+The program that uses PID controller to create a struct of motor commands.
+This function will be used in part2
 */
 
 #include "globals.h"
