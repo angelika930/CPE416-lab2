@@ -1,9 +1,8 @@
 /*Name: Christine Choi and Angelika Canete
-//Lab 1 part 4
+//Lab 3 part 1
 //Description: 
 
-The program that implements a line following robot. 
-The robot will follow 3 tracks, a circle, square and an oval.
+The following program uses a PID controller model to program a line-following robot.
 */
 
 #include "globals.h"
@@ -69,6 +68,7 @@ void button_pause()
         }
 }
 
+ /*Add to an array for derivative in PID*/
 void add_to_error_array(int added_num, int error_samples[NUM_OF_ERROR_SAMPLES]) 
 {
     for (int i = NUM_OF_ERROR_SAMPLES - 1; i > 0; i--) {
@@ -78,6 +78,7 @@ void add_to_error_array(int added_num, int error_samples[NUM_OF_ERROR_SAMPLES])
     error_samples[0] = added_num;
 }
 
+/*Calculate average error for derivative in PID*/
 float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES]) 
 {
     int sum = 0;
@@ -142,17 +143,32 @@ If a sensor does not see the corrrect value,  correct by the PDI
 }
 
 
-
-uint8_t normalize(uint8_t value) 
+//Changes a value to be between 0-1
+double normalize(uint8_t value) 
 {
-    return (value * 100) / 255;
+    double result = (value / 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 1.0) {
+        return 1.0;
+    } else {
+        return result;
+    }
+}
+//changes a value to be between 0-100
+double denormalize(double value) 
+{
+    double result = (value * 100.0);
+    if (result < 0.0) {
+        return 0.0;
+    } else if (result > 100.0) {
+        return 100.0;
+    } else {
+        return result;
+    }
 }
 
-uint8_t denormalize(uint8_t value) 
-{
-        return (value * 255) / 100;
-}
-
+ /*run motors based on struct input*/
 void run_motors(struct motor_command out) 
 {
     lcd_cursor(0, 0);
@@ -168,6 +184,8 @@ void run_motors(struct motor_command out)
     motor(1, denormalize(out.right));
 
 }
+
+//takes in left and right sensor values and outputs computed motor values by pid model
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
         struct motor_command curr_motor_command =  {0};

@@ -2,8 +2,9 @@
 //Lab 3 part 2
 //Description: 
 
-The program that implements a line following robot using a neural network based off of a pid model. 
-The robot will follow 3 tracks, a circle, square and an oval.
+The program implements a line following robot using back propagation.
+The robot using a PID equation to compute the target motor outputs, and
+then trains weights and biases to match the target.
 */
 
 #include "globals.h"
@@ -79,7 +80,6 @@ void motor(uint8_t num, int8_t speed)
                 set_servo(LEFT_MOTOR, adjusted_speed); 
         }
 }
-
 //prevents button debouncing
 int button_debounce()
 {
@@ -94,6 +94,7 @@ int button_debounce()
 //acts as a delay_ms function that also checks for a button press
 u16 button_delay_check(u16 loop)
 {
+    //acts as a delay_ms function that also checks for a button press
 
         u16 count = 0;
         int button_flag = 0;
@@ -111,6 +112,7 @@ u16 button_delay_check(u16 loop)
 
 void add_to_error_array(int added_num, int error_samples[NUM_OF_ERROR_SAMPLES]) 
 {
+    /*Add to an array for derivative in PID*/
     for (int i = NUM_OF_ERROR_SAMPLES - 1; i > 0; i--) {
         error_samples[i] = error_samples[i - 1];
     }
@@ -120,6 +122,7 @@ void add_to_error_array(int added_num, int error_samples[NUM_OF_ERROR_SAMPLES])
 
 float calculate_average_error(int error_samples[NUM_OF_ERROR_SAMPLES]) 
 {
+    /*Calculate average error for derivative in PID*/
     int sum = 0;
     for (int i = 0; i < NUM_OF_ERROR_SAMPLES; i++) {
         sum += error_samples[i];
@@ -139,7 +142,6 @@ double normalize(uint8_t value)
         return result;
     }
 }
-
 //changes a value to be between 0-100
 double denormalize(double value) 
 {
@@ -152,7 +154,6 @@ double denormalize(double value)
         return result;
     }
 }
-
 //takes in left and right sensor values and outputs computed motor values by pid model
 struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
 {
@@ -189,11 +190,9 @@ struct motor_command compute_proportional(uint8_t curr_left, uint8_t curr_right)
         return curr_motor_command;
 
 }
-
 //randomize weights on initialization
 void network_init()
 {
-    
     network[0].w1 =(double) rand()/ RAND_MAX;
     network[0].w2 = (double)rand()/ RAND_MAX;
     network[0].bias = (double)rand()/ RAND_MAX;
@@ -223,9 +222,7 @@ void network_init()
 
 int data_collection()
 {/*
-Measure the outside of the lines
-If both sensors see the same value, assume they are on the correct side of the line
-If a sensor does not see the corrrect value,  correct by the PDI 
+Collect sensor readings and input array into a global struct
 */
         int curr_left = 0;
         int curr_right = 0;
@@ -315,10 +312,21 @@ If a sensor does not see the corrrect value,  correct by the PDI
     }
 }
 
-//receive user input by tilting
+
+void delay(u16 loop)
+{
+        u16 count = 0;
+        while (count < loop)
+        {
+                _delay_ms(1);
+                count ++;
+        }
+}
+
+
 int get_training_itertions()
 {
-     
+    //receive user input by tilting 
     clear_screen();
     lcd_cursor(0, 0);
     print_string("<=-  +=>");
@@ -361,10 +369,10 @@ int get_training_itertions()
 
 }
 
-//receives datapoints captured outputs update neural network
+
 void train_neural_network(struct motor_command target, struct motor_command out, int sensor_left, int sensor_right)
 {
-    
+    //receives datapoints captured outputs update neural network
 
     double db_right = normalize(sensor_right);
     double db_left = normalize(sensor_left);
@@ -454,8 +462,9 @@ void train_neural_network(struct motor_command target, struct motor_command out,
     network[4].bias = new4_bias;
 
 }
+    //sigmoid calculation
 
-//takes in left and right sensor values and outputs computed motor values by neural network
+
 struct motor_command compute_neural_network(uint8_t sensor_left, uint8_t sensor_right) 
 {
     double curr_left = normalize(sensor_left);
@@ -490,6 +499,7 @@ struct motor_command compute_neural_network(uint8_t sensor_left, uint8_t sensor_
 
 void run_motors(struct motor_command out) 
 {   
+    /*run motors based on struct*/
     int left = denormalize(out.left);
     int right = denormalize(out.right);
 
@@ -509,7 +519,8 @@ void run_motors(struct motor_command out)
 
 enum state
 {
-INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE, TEST_STATE
+    /*state machine */
+INIT_STATE, PID_STATE, DATA_STATE, INPUT_STATE, TRAIN_STATE, FORWARD_STATE
 };
 
 
@@ -613,27 +624,6 @@ int main(void)
             }  
         }
         break;
-
-        break;
-
-        case TEST_STATE:
-        {
-
-            for (int j = 0; j < NUM_OF_COLLECTED_SAMPLES; j++) 
-            {
-                lcd_cursor(0,0);
-                print_num(j);
-                print_string("   ");
-                struct motor_command current = compute_proportional(sensor_val[j].left, sensor_val[j].right);
-                _delay_ms(10);
-                run_motors(current);
-
-            }
-
-
-        }
-        break;
-
     }
    }
 
