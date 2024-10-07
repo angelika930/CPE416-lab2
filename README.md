@@ -1,4 +1,4 @@
-# CPE416
+# CPE416: Autonomous Mobile Robotics
 
 Lab 3 Part 1:
 
