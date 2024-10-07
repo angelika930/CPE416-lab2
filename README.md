@@ -1,6 +1,7 @@
 # CPE416
 
 Lab 3 Part 1:
+
 Line-Following Robot with PID Control
 Description
 This project implements a line-following robot utilizing a PID (Proportional-Integral-Derivative) controller to navigate along predefined paths. The robot continuously reads sensor values and adjusts its motor speeds accordingly to maintain its course.
